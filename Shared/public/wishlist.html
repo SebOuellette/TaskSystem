@@ -1,0 +1,213 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Shopping Cart</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: linear-gradient(#040c0f, #0e151a); 
+                /* background-color: white;*/
+                margin: 0;
+                padding: 0;
+                color: white;
+            }
+    
+            header {
+                background: linear-gradient(#040c0f, #0e151a);
+                color: #00e4cc;
+                padding: 20px;
+                text-align: center;
+            }
+    
+            .menu-icon {
+                display: none;
+                cursor: pointer;
+            }
+    
+            .menu-icon div {
+                width: 30px;
+                height: 3px;
+                background-color: #000000;
+                margin: 6px 0;
+                transition: 0.4s;
+            }
+    
+            .navbar {
+                display: flex;
+                justify-content: center;
+                background-image: linear-gradient(to right, #082839, #005052, #082839);
+                box-shadow: 0px 10px 25px black;
+                
+            }
+    
+            .navbar ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+            }
+    
+            .navbar li {
+                margin-right: 20px;
+            }
+    
+            .navbar a {
+                text-decoration: none;
+                color: #ffffff;
+                font-weight: bold;
+            }
+    
+            h1 {
+                font-size: 24px;
+            }
+
+            a {
+                color: white;
+                text-decoration: none;
+            }
+    
+            .container {
+                margin: 20px;
+            }
+
+
+            .checkoutcontainer {
+                margin: 20px;
+                align-items: right;
+            }
+    
+            .product {
+                border: 1px solid #ccc;
+                margin: 10px 0;
+                padding: 10px;
+                display: flex;
+                align-items: center;
+            }
+    
+            .product img {
+                width: 100px;
+                height: 100px;
+                margin-right: 10px;
+            }
+    
+            .product-details {
+                flex: 1;
+            }
+
+            .product-details-small {
+                display: inline-block;
+                width: 30%;
+            }
+
+            .product-details-large {
+                display: inline-block;
+                vertical-align: top;
+            }
+
+            .product-description {
+                color: #eee;
+                width: 400px;
+            }
+    
+            .product-title {
+                font-weight: bold;
+            }
+    
+            .product-price {
+                color: turquoise;
+            }
+    
+            .cart-total {
+                background-color: turquoise;
+                color: #000000;
+                padding: 10px;
+                text-align: right;
+            }
+    
+            button {
+                background-color: turquoise;
+                color: #000000;
+                border: none;
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+    
+            button:hover {
+                background-color: rgb(44, 77, 44);
+            }
+    
+            @media screen and (max-width: 768px) {
+                .menu-icon {
+                    display: block;
+                }
+    
+                .navbar {
+                    display: none;
+                    flex-direction: column;
+                }
+    
+                .navbar.active {
+                    display: flex;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div style="float:right" class="menu-icon" onclick="toggleMenu()">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <div class="container">
+                <a style="float:left" class="navbar-brand" href="index.html">
+                    <img src="https://raw.githubusercontent.com/melbasiouny/group-3-ecommerce-product-module/main/frontend/public/logo.png" width="64">
+                </a>
+                <h1>Shopping Cart</h1>
+            </div>
+            <div class="navbar">
+                <ul class="active">
+                    <li><a href="[[HOME_LINK]]/index.html?uid=[[USER_ID]]&page=1">Home</a></li>
+                    <li><a href="/profile">Profile</a></li>
+                </ul>
+            </div>
+        </header>
+        <div class="container">
+            <!-- Product list and cart content here -->
+            
+            <!-- IMPORTANT - DO NOT DELETE OR MODIFY THE NEXT LINE -->
+            <!--[[NEXT-CART-ITEM]]-->
+
+
+            </ul>
+            <div class="container">
+                <div class="cart-total">
+                    Total: $[[TOTAL_COST]]
+                </div>
+            </div>
+           
+        </div>
+
+        <script>
+            function toggleMenu() {
+                const navbar = document.querySelector('.navbar');
+                navbar.classList.toggle('active');
+            }
+        </script>
+        <br/><br/>
+        <center>
+        <iframe src="[[AD-MODULE]]/api/ad/400/100" title="ad" width="400" height="100"></iframe> 
+        </center>
+        <footer style="height:fit-content;">
+            <div class="container">
+                <p>© (G3) eCommerce Product Module 2023. All rights left. Unauthorized
+                    copying of
+                    this project is not only frowned upon but also punishable by being forced to listen to elevator music
+                    for an entire day. Seriously, we worked hard on this – don't make us unleash the music of torture!
+                </p>
+            </div>
+        </footer>
+    </body>
+    </html>

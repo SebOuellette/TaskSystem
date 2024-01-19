@@ -1,6 +1,12 @@
 # Prerequisites
 *.d
 
+# Specific for this project
+*.tar
+Shared/build/*
+Shared/build
+.vscode/*
+
 # Compiled Object files
 *.slo
 *.lo

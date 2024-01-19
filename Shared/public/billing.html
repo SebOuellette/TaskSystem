@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html>
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>Shopping Cart</title>
+        <style>
+            body {
+                font-family: Arial, sans-serif;
+                background: linear-gradient(#040c0f, #0e151a); 
+                /* background-color: white;*/
+                margin: 0;
+                padding: 0;
+                color: white;
+            }
+    
+            header {
+                background: linear-gradient(#040c0f, #0e151a);
+                color: #00e4cc;
+                padding: 20px;
+                text-align: center;
+            }
+    
+            .menu-icon {
+                display: none;
+                cursor: pointer;
+            }
+    
+            .menu-icon div {
+                width: 30px;
+                height: 3px;
+                background-color: #000000;
+                margin: 6px 0;
+                transition: 0.4s;
+            }
+    
+            .navbar {
+                display: flex;
+                justify-content: center;
+                background-image: linear-gradient(to right, #082839, #005052, #082839);
+                box-shadow: 0px 10px 25px black;
+                
+            }
+    
+            .navbar ul {
+                list-style: none;
+                padding: 0;
+                margin: 0;
+                display: flex;
+            }
+    
+            .navbar li {
+                margin-right: 20px;
+            }
+    
+            .navbar a {
+                text-decoration: none;
+                color: #ffffff;
+                font-weight: bold;
+            }
+    
+            h1 {
+                font-size: 24px;
+            }
+    
+            .container {
+                margin: 20px;
+            }
+
+            .checkoutcontainer {
+                margin: 20px;
+                align-items: right;
+            }
+    
+            .product {
+                border: 1px solid #ccc;
+                margin: 10px 0;
+                padding: 10px;
+                display: flex;
+                align-items: center;
+            }
+    
+            .product img {
+                width: 100px;
+                height: 100px;
+                margin-right: 10px;
+            }
+    
+            .product-details {
+                flex: 1;
+            }
+    
+            .product-title {
+                font-weight: bold;
+            }
+    
+            .product-price {
+                color: turquoise;
+            }
+    
+            .cart-total {
+                background-color: turquoise;
+                color: #000000;
+                padding: 10px;
+                text-align: right;
+            }
+    
+            button {
+                background-color: turquoise;
+                color: #000000;
+                border: none;
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+    
+            button:hover {
+                background-color: #4CAF50;
+            }
+    
+            @media screen and (max-width: 768px) {
+                .menu-icon {
+                    display: block;
+                }
+    
+                .navbar {
+                    display: none;
+                    flex-direction: column;
+                }
+    
+                .navbar.active {
+                    display: flex;
+                }
+            }
+        </style>
+    </head>
+    <body>
+        <header>
+            <div class="menu-icon" onclick="toggleMenu()">
+                <div></div>
+                <div></div>
+                <div></div>
+            </div>
+            <h1>Shopping Cart</h1>
+            <div class="navbar">
+                <ul class="active">
+                    <li><a href="/home">Home</a></li>
+                    <li><a href="/products">Products</a></li>
+                    <li><a href="/323">Cart</a></li>
+                </ul>
+            </div>
+        </header>
+       <div>
+        <h1>
+            BILLING PAGE TBD
+        </h1>
+       </div>
+        </div>
+
+    
+        <script>
+            function toggleMenu() {
+                const navbar = document.querySelector('.navbar');
+                navbar.classList.toggle('active');
+            }
+        </script>
+    </body>
+    </html>
