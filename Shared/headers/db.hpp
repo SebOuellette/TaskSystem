@@ -152,7 +152,7 @@ public:
 
 		vector<Task> tasks;
 
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "%\"" << key << "%\"";
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "\"%" << key << "%\"";
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			vector<Task>* tasks = (vector<Task>*)data;
