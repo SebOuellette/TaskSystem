@@ -1,16 +1,15 @@
 #define CROW_MAIN
 
 #include "headers/db.hpp"
-#include "headers/http.hpp"
-
 #include <regex>
 #include <iostream>
 #include <string>
 #include <random>
 #include <ctime>
-#include "crow_all.h"
+#include "headers/crow_all.h"
 
 using namespace crow;
+using namespace std;
 
 // Function Definitions
 std::string loadFile(response& res, std::string _folder, std::string _name);

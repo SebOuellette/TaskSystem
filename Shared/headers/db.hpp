@@ -3,6 +3,7 @@
 #ifndef DB_HPP
 #define DB_HPP
 
+#include <string.h>
 #include <vector>
 #include "defines.hpp"
 #include "task.h"
@@ -18,6 +19,8 @@
 
 // debug
 #define LOG_SUCCESSFUL_QUERIES
+
+using namespace std;
 
 class TaskDb {
 private:
@@ -69,7 +72,7 @@ public:
 
 		// Ensure the database opens correctly
 		if (exit != SQLITE_OK) {
-			std::cerr << "Database failed to open." << std::endl;
+			std::cerr << "Database failed to open. Retcode: " << exit << std::endl;
 
 			throw 1;
 		}
@@ -101,16 +104,16 @@ public:
 		return this->run(insertQuery.str(), NULL);
 	}
 	//get part names from id
-	Part& getPart(Task& t)
+	Part getPart(Task& t)
 	{
 		Part foundPart;
-		std::string PartTable = "Parts";
+		string PartTable = "Parts";
 
-		std::stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE partid == \"" << std::to_string(t.consumedPart.id) << "\"";
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE partid == \"" << to_string(t.consumedPart.id) << "\"";
 
-		if (!this->run(selectQuery.str()))
-			return foundPart;
+		if (!t.consumedPart.id)
+			return Part();
 
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
@@ -123,11 +126,11 @@ public:
 		
 	}
 	//get tasks by filter
-	std::vector<Task> getFilteredTasks(std::string key, Task::COLUMNS column)
+	vector<Task> getFilteredTasks(string key, Task::COLUMNS column)
 	{
-		std::string TaskTable = "Tasks";
-		std::stringstream selectQuery;
-		std::string colName;
+		string TaskTable = "Tasks";
+		stringstream selectQuery;
+		string colName;
 
 		switch(column)
 		{
@@ -147,30 +150,30 @@ public:
 			colName = "title";
 		}
 
-		std::vector<Task> tasks;
+		vector<Task> tasks;
 
 		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "%\"" << key << "%\"";
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
-			std::vector<Task>* tasks = (std::vector<Task>*)data;
+			vector<Task>* tasks = (vector<Task>*)data;
 
 			for(int row = 0; row < argc; row++)
 			{
 				Task fromDbQuery;
 				
 				if (strcmp(colNames[row], "id") == 0) {
-					fromDbQuery.id = std::stoi(argv[row]);
+					fromDbQuery.id = stoi(argv[row]);
 				}
 				else if (strcmp(colNames[row], "title") == 0) {
 					int length = strlen(argv[row]) + 1;
-					strncpy_s(fromDbQuery.title, argv[row], length);
+					strncpy(fromDbQuery.title, argv[row], length);
 				}
 				else if (strcmp(colNames[row], "description") == 0) {
 					int length = strlen(argv[row]) + 1;
-					strncpy_s(fromDbQuery.description, argv[row], length);
+					strncpy(fromDbQuery.description, argv[row], length);
 				}
 				else if (strcmp(colNames[row], "partid") == 0) {
-					fromDbQuery.consumedPart.id = std::stoi(argv[row]);
+					fromDbQuery.consumedPart.id = stoi(argv[row]);
 				}
 
 				tasks->push_back(fromDbQuery);
@@ -188,20 +191,20 @@ public:
 	//Update task
 	bool updateTask(Task& withNewDetails)
 	{
-		std::string TaskTable = "Tasks";
-		std::stringstream updateQuery;
+		string TaskTable = "Tasks";
+		stringstream updateQuery;
 
-		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << std::string(withNewDetails.title) << "\", description = \"" << std::string(withNewDetails.description) << "\", partid = " << std::to_string(withNewDetails.consumedPart.id) << " WHERE taskid == " << std::to_string(withNewDetails.id);
+		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << " WHERE taskid == " << to_string(withNewDetails.id);
 		if (this->run(updateQuery.str()))
 			return true;
 		else
 			return false;
 	}
 	//Delete a task
-	bool deleteTask(std::string id)
+	bool deleteTask(string id)
 	{
-		std::stringstream deleteQuery;
-		std::string TaskTable = "Tasks";
+		stringstream deleteQuery;
+		string TaskTable = "Tasks";
 
 		if(!id.empty())
 		{

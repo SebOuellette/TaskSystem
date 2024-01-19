@@ -3,7 +3,7 @@
 
 // Program Defines
 #define TABLES 3
-#define DB_PATH "./Shared/task.db" // will create task.db in the shared folder
+#define DB_PATH "/Shared/task.db" // will create task.db in the shared folder
 #define EMTPY ""
 
 // Task Defines
