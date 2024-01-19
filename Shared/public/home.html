@@ -32,35 +32,6 @@
         float: right;
       }
 
-      .task-list-container {
-        background-color: #f2f2f2; /* Container background color */
-        border-radius: 10px;
-        padding: 20px;
-        margin: 20px;
-      }
-
-      table {
-        width: 100%;
-        border-collapse: collapse;
-        margin-top: 10px;
-        border: none; /* Remove the border */
-      }
-
-      th,
-      td {
-        text-align: center;
-        padding: 8px;
-        border: none; /* Remove the border */
-      }
-
-      th {
-        background-color: #f2f2f2;
-      }
-
-      .task-list-container td {
-        background-color: #ffffff; /* Set background color for td elements */
-      }
-
       .filter-btn {
         float: right;
         margin-right: 20px;
@@ -132,6 +103,38 @@
         max-height: 70px;
       }
 
+      .task-list-container {
+        background-color: #f2f2f2; /* Container background color */
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px;
+
+        overflow-y: auto;
+      }
+
+      .scrollingTable {
+        width: 30em;
+        overflow-y: auto;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        border: none; /* Remove the border */
+      }
+
+      th,
+      td {
+        text-align: center;
+        padding: 8px;
+        border: none; /* Remove the border */
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
       .button-style {
         background-color: #ffffff;
         border: none;
@@ -151,7 +154,7 @@
         height: 40px;
         overflow: hidden;
         text-overflow: ellipsis;
-
+        background-color: #ffffff;
         font-size: 100%;
       }
 
@@ -223,10 +226,38 @@
       .active:after {
         content: "\2796"; /* Unicode character for "minus" sign (-) */
       }
+
+      #myInput {
+        background-image: url("/css/searchicon.png"); /* Add a search icon to input */
+        background-position: 10px 12px; /* Position the search icon */
+        background-repeat: no-repeat; /* Do not repeat the icon image */
+        width: 50%; /* Full-width */
+        font-size: 16px; /* Increase font-size */
+        padding: 12px 20px 12px 40px; /* Add some padding */
+        border: 1px solid #ddd; /* Add a grey border */
+        margin-bottom: 12px; /* Add some space below the input */
+      }
     </style>
+    <script type="text/javascript">
+      // function to implement vertical table scrolling
+      function makeTableScroll() {
+        var maxRows = 20;
+
+        var table = document.getElementById("html-data-table");
+        var wrapper = table.parentNode;
+        var rowsInTable = table.rows.length;
+        var height = 0;
+        if (rowsInTable > maxRows) {
+          for (var i = 0; i < maxRows; i++) {
+            height += table.rows[i].clientHeight;
+          }
+          wrapper.style.height = height + "px";
+        }
+      }
+    </script>
     <title>Task Management</title>
   </head>
-  <body>
+  <body onload="makeTableScroll();">
     <div style="margin-bottom: 20px"></div>
     <h2 style="margin-left: 20px; display: inline">Maintenance Tasks</h2>
     <div class="header">
@@ -280,11 +311,17 @@
       </div>
     </div>
 
+    <input
+      type="text"
+      id="myInput"
+      onkeyup="myFunction()"
+      placeholder="Search for names.."
+    />
     <button class="filter-btn">Filter</button>
     <h2 style="margin-left: 20px">Task List</h2>
 
-    <div class="task-list-container">
-      <table id="html-data-table">
+    <div class="task-list-container" style="overflow-x: auto">
+      <table id="html-data-table" style="overflow-y: scroll">
         <thead>
           <tr>
             <th class="title">Title</th>
@@ -452,6 +489,53 @@
             panel.style.maxHeight = panel.scrollHeight + "px";
           }
         });
+      }
+
+      //function to implement search bar functionality
+      function myFunction() {
+        // Declare variables
+        var input,
+          filter,
+          table,
+          tr,
+          title,
+          assignee,
+          category,
+          description,
+          i,
+          titleTxtValue,
+          descriptionTxtValue,
+          categoryTxtValue,
+          assigneeTxtValue;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("html-data-table");
+        tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows titles, and hide those who don't match the search query
+        for (i = 0; i < tr.length; i++) {
+          title = tr[i].getElementsByTagName("td")[0];
+          description = tr[i].getElementsByTagName("td")[1];
+          category = tr[i].getElementsByTagName("td")[2];
+          assignee = tr[i].getElementsByTagName("td")[3];
+          if (title) {
+            titleTxtValue = title.textContent || title.innerText;
+            descriptionTxtValue =
+              description.textContent || description.innerText;
+            categoryTxtValue = category.textContent || category.innerText;
+            assigneeTxtValue = assignee.textContent || assignee.innerText;
+            if (
+              titleTxtValue.toUpperCase().indexOf(filter) > -1 ||
+              descriptionTxtValue.toUpperCase().indexOf(filter) > -1 ||
+              categoryTxtValue.toUpperCase().indexOf(filter) > -1 ||
+              assigneeTxtValue.toUpperCase().indexOf(filter) > -1
+            ) {
+              tr[i].style.display = "";
+            } else {
+              tr[i].style.display = "none";
+            }
+          }
+        }
       }
     </script>
   </body>
