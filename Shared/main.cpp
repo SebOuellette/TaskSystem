@@ -8,7 +8,9 @@
 #include <string>
 #include <random>
 #include <ctime>
+#include "crow_all.h"
 
+using namespace crow;
 
 // Function Definitions
 std::string loadFile(response& res, std::string _folder, std::string _name);
@@ -20,19 +22,13 @@ int main()
 {
 	srand(time(NULL));
 
-	curl_global_init(CURL_GLOBAL_DEFAULT);
 	crow::SimpleApp app;
 	// Create and initialize the database
-	DB db;
+	TaskDb db;
 
-	
-	
-
-	
-	
 
 	CROW_ROUTE(app, "/") // Index page
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
+	.methods(HTTPMethod::Options, HTTPMethod::Get)
         ([&db](const request& req, response& res){
 			// Redirect to the cart page
             res.code = 200;
@@ -43,7 +39,7 @@ int main()
         });
 
 	CROW_ROUTE(app, "/help") // Index page
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
+	.methods(HTTPMethod::Options, HTTPMethod::Get)
         ([&db](const request& req, response& res){
 			// Redirect to the cart page
             res.code = 200;
@@ -55,13 +51,13 @@ int main()
 
 
 	CROW_ROUTE(app, "/edit/<int>") // Get a current task by id
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET, HTTPMethod::PATCH)
+	.methods(HTTPMethod::Options, HTTPMethod::Get, HTTPMethod::Patch)
         ([&db](const request& req, response& res, int id){
 
-			if (req.method == HTTPMethod::GET) {
+			if (req.method == HTTPMethod::Get) {
 				// read database
 
-			} else if (req.method == HTTPMethod::PATCH) {
+			} else if (req.method == HTTPMethod::Patch) {
 				// Update only changed elements
 			}
 
@@ -69,12 +65,12 @@ int main()
 		});
 
 	CROW_ROUTE(app, "/add") // Upload a new task
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::POST, HTTPMethod::PUT)
+	.methods(HTTPMethod::Options, HTTPMethod::Post, HTTPMethod::Put)
         ([&db](const request& req, response& res){
-			if (req.method == HTTPMethod::POST) {
+			if (req.method == HTTPMethod::Post) {
 				// Check if task exists
 				// If it does, return 409
-			} else if (req.method == HTTPMethod::PUT) {
+			} else if (req.method == HTTPMethod::Put) {
 				// Check if task exists
 				// if not, return "not found"
 
@@ -85,7 +81,7 @@ int main()
 		});
 
 	CROW_ROUTE(app, "/delete") // Replace exisitng task
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::DELETE)
+	.methods(HTTPMethod::Options, HTTPMethod::Delete)
         ([&db](const request& req, response& res){
 
 			// Delete task if exists in database

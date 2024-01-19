@@ -59,8 +59,9 @@ public:
 	// Initialize the database table
 	bool init() {
 		std::string createTables[TABLES] = {
-			"CREATE TABLE IF NOT EXISTS Tasks (id INTEGER NOT NULL UNIQUE, taskid int NOT NULL UNIQUE, title varchar(128) NOT NULL, description varchar(4096) NULL, partid int NULL, PRIMARY KEY(id AUTOINCREMENT))",
-			"CREATE TABLE IF NOT EXISTS Parts (id INTEGER NOT NULL UNIQUE, partid int NOT NULL UNIQUE, name varchar(25) NOT NULL, serialnumber varchar(50) NOT NULL, PRIMARY KEY(id AUTOINCREMENT))",
+			"CREATE TABLE IF NOT EXISTS Tasks (id INTEGER NOT NULL UNIQUE, title varchar(128) NOT NULL, description varchar(4096) NULL, partid int NULL, PRIMARY KEY(id AUTOINCREMENT))",
+			"CREATE TABLE IF NOT EXISTS Parts (id INTEGER NOT NULL UNIQUE, name varchar(25) NOT NULL, serialnumber varchar(50) NOT NULL, PRIMARY KEY(id AUTOINCREMENT))",
+			"CREATE TABLE IF NOT EXISTS Users (id INTEGER NOT NULL UNIQUE, name varchar(50) NOT NULL, PRIMARY KEY(id AUTOMINCREMENT))"
 		};
 
 		// Open Database

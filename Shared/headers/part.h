@@ -10,22 +10,12 @@ typedef struct _Part {
 	ID id;
 	char name[PART_NAME_LENGTH];
 	char serialNumber[PART_SERIAL_LENGTH];
-	int quantityInStock;
 
 	std::chrono::system_clock::time_point timeAdded;
-	enum COLUMNS { IDCOL, NAME, SERIALNUMBER, QUANTITY };
+	enum COLUMNS { IDCOL, NAME, SERIALNUMBER };
 
 	_Part() : timeAdded(std::chrono::system_clock::now()) {}
 
-	bool isAvailable() {
-
-		if (!quantityInStock) {
-			return false;
-		}
-		else {
-			return true;
-		}
-	}
 	_Part& operator=(const _Part& other)
 	{
 		if (this == &other)
@@ -33,7 +23,6 @@ typedef struct _Part {
 
 		std::copy(other.name, other.name + PART_NAME_LENGTH, this->name);
 		std::copy(other.serialNumber, other.serialNumber + PART_SERIAL_LENGTH, this->serialNumber);
-		this->quantityInStock = other.quantityInStock;
 		return *this;
 	}
 	// Add conversion from a product to an int

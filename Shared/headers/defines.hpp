@@ -2,7 +2,7 @@
 #define DEFINES_HPP
 
 // Program Defines
-#define TABLES 2
+#define TABLES 3
 #define DB_PATH "./Shared/task.db" // will create task.db in the shared folder
 #define EMTPY ""
 
@@ -13,6 +13,9 @@
 // Part Defines
 #define PART_NAME_LENGTH 25
 #define PART_SERIAL_LENGTH 50
+
+//User Defines
+#define USER_NAME_LENGTH 25
 
 // ID variable type is an unsigned 64-bit integer
 typedef int ID;
