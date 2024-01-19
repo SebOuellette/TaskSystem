@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Management Help</title>
+    <style>
+      .container {
+        background-color: #f2f2f2;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px;
+        display: flex;
+        flex-direction: column;
+        max-width: 1800px;
+      }
+
+      th {
+        border-bottom: thin lightgrey solid;
+      }
+      th.verb,
+      td.verb {
+        text-align: left;
+        padding: 8px;
+        width: 30%;
+        max-width: 80px; /* Restrict the max width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+    </style>
+  </head>
+  <body>
+    <h2 style="margin-left: 20px">Help</h2>
+
+    <div class="container">
+      <table id="html-data-table">
+        <thead>
+          <tr>
+            <th class="verb">Verb</th>
+            <th style="text-align: left">Description</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td class="verb">Your Data</td>
+            <td>Your Data</td>
+          </tr>
+          <!-- Populate this section with your task data using server-side rendering or JavaScript -->
+        </tbody>
+      </table>
+    </div>
+
+    <script type="text/javascript" charset="utf-8">
+      function submitReport() {
+        fetch("https://jsonplaceholder.typicode.com/todos", {
+          method: "OPTIONS",
+          body: JSON.stringify({
+            title: document.getElementById("title").innerText,
+            Description: document.getElementById("description").innerText,
+            Category: document.getElementById("category").innerText,
+            Assigned: document.getElementById("assigned").innerText,
+          }),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        });
+      }
+
+      function renderDataInTheTable(todos) {
+        const mytable = document.getElementById("html-data-table");
+        todos.forEach((todo) => {
+          let newRow = document.createElement("tr");
+          Object.values(todo).forEach((value) => {
+            let cell = document.createElement("td");
+            cell.innerText = value;
+            newRow.appendChild(cell);
+          });
+
+          mytable.appendChild(newRow);
+        });
+      }
+    </script>
+  </body>
+</html>
