@@ -32,7 +32,7 @@ int main()
 	
 
 	CROW_ROUTE(app, "/") // Index page
-	.methods(HTTPMethod::DELETE, HTTPMethod::GET)
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
         ([&db](const request& req, response& res){
 			// Redirect to the cart page
             res.code = 200;
