@@ -196,6 +196,20 @@ public:
 		else
 			return false;
 	}
+	//Delete a task
+	bool deleteTask(std::string id)
+	{
+		std::stringstream deleteQuery;
+		std::string TaskTable = "Tasks";
+
+		if(!id.empty())
+		{
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE TaskId = " << id;
+			if(this->run(deleteQuery.str()))
+				return true;
+		}
+		return false;
+	}
 };
 
 #endif
