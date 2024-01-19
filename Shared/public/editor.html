@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Task Management Help</title>
+    <style>
+        body {
+        font-family: Arial, sans-serif;
+        margin: 0;
+        padding: 0;
+      }
+
+      #data-table {
+        height: 500px;
+        width: 100%;
+      }
+
+      .container {
+        background-color: #f2f2f2;
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px;
+        display: flex;
+        flex-direction: column;
+        max-width: 1800px;
+      }
+
+      .header {
+        text-align: right;
+        margin-right: 20px;
+        display: inline;
+        float: right;
+      }
+
+      .task-list-container {
+        background-color: #f2f2f2; /* Container background color */
+        border-radius: 10px;
+        padding: 20px;
+        margin: 20px;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 10px;
+        border: none; /* Remove the border */
+      }
+
+      th,
+      td {
+        text-align: center;
+        padding: 8px;
+        border: none; /* Remove the border */
+      }
+
+      th {
+        background-color: #f2f2f2;
+      }
+
+      .task-list-container td {
+        background-color: #ffffff; /* Set background color for td elements */
+      }
+
+      .filter-btn {
+        float: right;
+        margin-right: 20px;
+        margin-bottom: 10px;
+        padding: 10px;
+        border: none;
+        border-radius: 5px;
+        cursor: pointer;
+      }
+
+      /* New styles for the bottom half */
+      .bottom-half {
+        display: flex;
+        flex: 1;
+        justify-content: space-between;
+        align-items: stretch;
+        margin-top: 20px;
+      }
+
+      .column {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-right: 10px;
+      }
+
+      .column2 {
+        flex: 1;
+        display: flex;
+        flex-direction: column;
+        margin-right: 10px;
+        max-width: 130px !important;
+      }
+
+      .row {
+        flex: 1;
+        display: flex;
+        margin-bottom: 10px;
+        flex-direction: column;
+      }
+
+      .row input,
+      .row textarea {
+        flex: 1;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        margin-right: 10px;
+      }
+
+      .row textarea {
+        resize: none; /* Disable resizing of the textarea */
+        height: 200px; /* Set the height to 200px */
+      }
+
+      .row select,
+      .row button {
+        margin-left: 10px;
+        border: none;
+        padding: 10px;
+        border-radius: 5px;
+        cursor: pointer;
+        background-color: #6b9ce5;
+        color: #ffffff;
+      }
+
+      /* Set max height for the category dropdown */
+      .row select {
+        max-height: 70px;
+      }
+
+      .button-style {
+        background-color: #ffffff;
+        border: none;
+        padding: 0;
+        margin: 0;
+        cursor: pointer;
+        font-size: 100%;
+        text-decoration: underline; /* Optional: Add underline for a cleaner look */
+      }
+
+      .task-list-container table {
+        table-layout: fixed;
+        width: 100%; /* Ensure the table takes 100% width */
+      }
+      .task-list-container td {
+        border: none;
+        height: 40px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+
+        font-size: 100%;
+      }
+
+      .task-list-container th.buttons,
+      .task-list-container td.buttons {
+        text-align: center;
+        padding: 8px;
+        border: none;
+        width: 3%;
+        max-width: 76px; /* Restrict the max width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .task-list-container th.title,
+      .task-list-container td.title {
+        text-align: center;
+        padding: 8px;
+        border: none;
+        width: 30%;
+        max-width: 200px; /* Restrict the max width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+
+      .assigned {
+        width: 6%;
+        max-width: 100px; /* Restrict the max width */
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      /* Style the buttons that are used to open and close the accordion panel */
+      .accordion {
+        cursor: pointer;
+        padding: 18px;
+        width: 100%;
+        text-align: left;
+        border: none;
+        outline: none;
+        transition: 0.4s;
+        background-color: #ffffff !important;
+      }
+
+      /* Add a background color to the button if it is clicked on (add the .active class with JS), and when you move the mouse over it (hover) */
+      .active,
+      .accordion:hover {
+        background-color: #ccc;
+      }
+
+      /* Style the accordion panel. Note: hidden by default */
+      .panel {
+        padding: 0 18px;
+        background-color: white;
+        max-height: 0;
+        overflow: hidden;
+        transition: max-height 0.2s ease-out !important;
+      }
+
+      .accordion:after {
+        content: "\02795"; /* Unicode character for "plus" sign (+) */
+        font-size: 13px;
+        float: right;
+        margin-left: 5px;
+      }
+
+      .active:after {
+        content: "\2796"; /* Unicode character for "minus" sign (-) */
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+        <div value="1" class="bottom-half">
+          <div class="column">
+            <div class="row">
+              <input
+                type="text"
+                id="title"
+                name="title"
+                placeholder="Enter title"
+              />
+            </div>
+            <div class="row">
+              <textarea
+                id="description"
+                name="description"
+                placeholder="Enter description"
+              ></textarea>
+            </div>
+          </div>
+          <div class="column2">
+            <div class="row">
+              <span style="margin-bottom: 5px" id="categorylable">Category</span>
+              <select id="category" name="category">
+                <option value="category1">Category 1</option>
+                <option value="category2">Category 2</option>
+                <option value="category3">Category 3</option>
+              </select>
+              <span
+                style="margin-top: 10px; margin-bottom: 5px"
+                id="assignedlable"
+                >Assignee</span
+              >
+              <select id="assigned" name="category" aria-placeholder="assigned">
+                <option value="category1">Zebadiah</option>
+                <option value="category2">Tom</option>
+                <option value="category3">Kiana</option>
+                <option value="category4">Sebastion</option>
+                <option value="category5">N/A</option>
+              </select>
+            </div>
+            <div class="row">
+              <button type="submit" onclick="submitReport()">Submit</button>
+            </div>
+          </div>
+        </div>
+      </div> 
+      <script type="text/javascript" charset="utf-8">
+        function submitReport() {
+          fetch("https://jsonplaceholder.typicode.com/todos", {
+            method: "POST",
+            body: JSON.stringify({
+              title: document.getElementById("title").innerText,
+              Description: document.getElementById("description").innerText,
+              Category: document.getElementById("category").innerText,
+              Assigned: document.getElementById("assigned").innerText,
+              value: document.getElementById("value").innerText,
+            }),
+            headers: {
+              "Content-type": "application/json; charset=UTF-8",
+            },
+          });
+        }
+  
+        fetch("https://jsonplaceholder.typicode.com/todos")
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (apiJsonData) {
+            console.log(apiJsonData);
+            renderDataInTheTable(apiJsonData);
+          });
+  
+      </script>   
+  </body>
+</html>
