@@ -1,0 +1,77 @@
+### Add the waterbottle to 777
+POST http://localhost:8080/api/upload/777
+
+{
+    "id": 568,
+    "sellerid": 1000,
+    "name": "Waterbottle 2",
+    "description": "A 55L Waterbottle, perfect for hikes and stuff.",
+    "imgurl": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.bHj_9fdyvWQVzpFcnZsuNAHaLE%26pid%3DApi%26h%3D160&f=1&ipt=48be6108a930ac5836f25296ae183b24c6d29cb44fa61c99ee1bbb4b0d32ae20&ipo=images",
+    "cost": 9.99
+}
+
+### 
+POST http://localhost:8080/api/upload/777
+
+{
+    "id": 34567,
+    "sellerid": 1001,
+    "name": "WALMART - Longest Charging Cable [NO SCAM][REAL]",
+    "description": "A 384 km charging cable",
+    "imgurl": "https://external-content.duckduckgo.com/iu/?u=https%3A%2F%2Ftse1.mm.bing.net%2Fth%3Fid%3DOIP.8DMo__WboipZwuz8nP0c8gHaHa%26pid%3DApi&f=1&ipt=5bceadfeedca19d68890dfde38591c5b404938fcb528709c8a3655d495e40ebb&ipo=images",
+    "cost": 99.99
+}
+
+
+### 
+POST http://localhost:8080/api/upload/777
+
+{
+    "id": 34528,
+    "sellerid": 1001,
+    "name": "Nothing",
+    "description": "Give the gift of nothing! Your friends and family are sure to disown you forever!",
+    "imgurl": "https://www.homerungifts.com/wp-content/uploads/2019/12/The-Gift-of-Nothing.jpg",
+    "cost": 7.50
+}
+
+### String Product ID and seller ID
+POST http://localhost:8080/api/upload/777
+
+{
+    "id": "P23498729387",
+    "sellerid": "S3456934857",
+    "name": "Potato",
+    "description": "In a pinch, you can historically always rely on potatoes.",
+    "imgurl": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.valleyspuds.com%2Fwp-content%2Fuploads%2FRusset-Potatoes-cut.jpg&f=1&nofb=1&ipt=99bba0bcf7bb7048f6ceffcdd96d08db1dccd6c6ba03270a83cd009525503b67&ipo=images",
+    "cost": 2.99
+}
+
+### String Product ID, String SellerID, and string UserID
+POST http://localhost:8080/api/upload/777meat
+
+{
+    "id": "P23498729387",
+    "sellerid": "S3456934857",
+    "name": "Potato",
+    "description": "In a pinch, you can historically always rely on potatoes.",
+    "imgurl": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.valleyspuds.com%2Fwp-content%2Fuploads%2FRusset-Potatoes-cut.jpg&f=1&nofb=1&ipt=99bba0bcf7bb7048f6ceffcdd96d08db1dccd6c6ba03270a83cd009525503b67&ipo=images",
+    "cost": 2.99
+}
+
+
+### String Product ID, String SellerID, and string UserID
+# All uploading to a wishlist
+POST http://localhost:8080/api/wishlist/upload/777
+
+{
+    "id": "P23498729387",
+    "sellerid": "S3456934857",
+    "name": "Potato",
+    "description": "In a pinch, you can historically always rely on potatoes.",
+    "imgurl": "https://external-content.duckduckgo.com/iu/?u=http%3A%2F%2Fwww.valleyspuds.com%2Fwp-content%2Fuploads%2FRusset-Potatoes-cut.jpg&f=1&nofb=1&ipt=99bba0bcf7bb7048f6ceffcdd96d08db1dccd6c6ba03270a83cd009525503b67&ipo=images",
+    "cost": 2.99
+}
+
+### Delete the waterbottle from 777
+DELETE http://localhost:8080/api/remove/42069/568
