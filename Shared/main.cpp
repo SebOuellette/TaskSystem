@@ -41,6 +41,61 @@ int main()
 
             res.end();
         });
+
+
+	CROW_ROUTE(app, "/edit/<int>") // Get a current task by id
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
+        ([&db](const request& req, response& res, int id){
+
+			// read database
+		});
+
+	CROW_ROUTE(app, "/edit/<int>") // Update tasks
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::PATCH)
+        ([&db](const request& req, response& res, int id){
+
+			// Update database
+			// only update the provided variables
+		});
+
+	CROW_ROUTE(app, "/add") // Upload a new task
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::POST)
+        ([&db](const request& req, response& res){
+
+			// Check if task exists
+			// If it does, return 409
+		});
+
+	CROW_ROUTE(app, "/add") // Replace exisitng task
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::PUT)
+        ([&db](const request& req, response& res){
+
+			// Check if task exists
+			// if not, return "not found"
+
+			// Replace existing task with provided data
+
+
+		});
+
+	CROW_ROUTE(app, "/delete") // Replace exisitng task
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::DELETE)
+        ([&db](const request& req, response& res){
+
+			// Delete task if exists in database
+
+
+		});
+
+
+
+	// OPTIONS /
+	// GET /edit/<int>
+	// PATCH /edit/<int>
+	// POST  /add 				// add if it doesn't exist, otherwise return 409
+	// PUT /add   				// replace existing entry
+	// DELETE /delete/<int> 	// delete entry
+	 
 		
 	app.port(8080).multithreaded().run();
 	return 1;
