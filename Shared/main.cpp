@@ -37,45 +37,51 @@ int main()
 			// Redirect to the cart page
             res.code = 200;
 		
-			res.write(loadFile(res, "", "index.html"));
+			res.write(loadFile(res, "", "home.html"));
+
+            res.end();
+        });
+
+	CROW_ROUTE(app, "/help") // Index page
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
+        ([&db](const request& req, response& res){
+			// Redirect to the cart page
+            res.code = 200;
+		
+			res.write(loadFile(res, "", "help.html"));
 
             res.end();
         });
 
 
 	CROW_ROUTE(app, "/edit/<int>") // Get a current task by id
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET, HTTPMethod::PATCH)
         ([&db](const request& req, response& res, int id){
 
-			// read database
-		});
+			if (req.method == HTTPMethod::GET) {
+				// read database
 
-	CROW_ROUTE(app, "/edit/<int>") // Update tasks
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::PATCH)
-        ([&db](const request& req, response& res, int id){
+			} else if (req.method == HTTPMethod::PATCH) {
+				// Update only changed elements
+			}
 
-			// Update database
-			// only update the provided variables
+			
 		});
 
 	CROW_ROUTE(app, "/add") // Upload a new task
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::POST)
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::POST, HTTPMethod::PUT)
         ([&db](const request& req, response& res){
+			if (req.method == HTTPMethod::POST) {
+				// Check if task exists
+				// If it does, return 409
+			} else if (req.method == HTTPMethod::PUT) {
+				// Check if task exists
+				// if not, return "not found"
 
-			// Check if task exists
-			// If it does, return 409
-		});
+				// Replace existing task with provided data
+			}
 
-	CROW_ROUTE(app, "/add") // Replace exisitng task
-	.methods(HTTPMethod::OPTIONS, HTTPMethod::PUT)
-        ([&db](const request& req, response& res){
-
-			// Check if task exists
-			// if not, return "not found"
-
-			// Replace existing task with provided data
-
-
+			
 		});
 
 	CROW_ROUTE(app, "/delete") // Replace exisitng task
