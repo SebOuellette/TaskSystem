@@ -234,7 +234,7 @@
     </div>
 
     <div class="container">
-      <div value="1" class="bottom-half">
+      <div id="taskValue" value="1" class="bottom-half">
         <div class="column">
           <div class="row">
             <input
@@ -337,7 +337,7 @@
             Description: document.getElementById("description").innerText,
             Category: document.getElementById("category").innerText,
             Assigned: document.getElementById("assigned").innerText,
-            value: document.getElementById("value").innerText,
+            value: document.getElementById("value").value,
           }),
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -376,12 +376,12 @@
               div.appendChild(paragraph);
               cell.appendChild(div);
               newRow.appendChild(cell);
-            } else if (count == 7) {
+            } /*else if (count == 7) {
               let cell = document.createElement("td");
               cell.value = value;
               newRow.appendChild(cell);
               count = 1;
-            } else {
+            }*/ else {
               let cell = document.createElement("td");
               cell.innerText = value;
               newRow.appendChild(cell);
@@ -406,6 +406,22 @@
             deleteFunction();
           };
           newRow.appendChild(deleteCell);
+
+          // adds the accordion dropdown functionality to the table
+          var acc = document.getElementsByClassName("accordion");
+          var i;
+
+          for (i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function () {
+              this.classList.toggle("active");
+              var panel = this.nextElementSibling;
+              if (panel.style.maxHeight) {
+                panel.style.maxHeight = null;
+              } else {
+                panel.style.maxHeight = panel.scrollHeight + "px";
+              }
+            });
+          }
 
           mytable.appendChild(newRow);
         });
