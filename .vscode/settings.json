@@ -1,0 +1,11 @@
+{
+    "files.associations": {
+        "chrono": "cpp",
+        "thread": "cpp",
+        "string_view": "cpp",
+        "regex": "cpp",
+        "*.tcc": "cpp",
+        "string": "cpp",
+        "iostream": "cpp"
+    }
+}

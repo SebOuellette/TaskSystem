@@ -1,9 +1,15 @@
+#pragma once
+
 #ifndef DB_HPP
 #define DB_HPP
 
-#include <sqlite3.h>
+#include "user.h"
+#include <string.h>
+#include <vector>
 #include "defines.hpp"
-#include "product.hpp"
+#include "task.h"
+#include "part.h"
+#include <sqlite3.h>
 #include <string>
 #include <functional>
 #include <iostream>
@@ -15,36 +21,38 @@
 // debug
 #define LOG_SUCCESSFUL_QUERIES
 
-class DB {
+using namespace std;
+
+class TaskDb {
 private:
 	sqlite3* _db;
 
 public:
-	DB() {
+	TaskDb() {
 		this->init();
 	}
 
-	~DB() {
+	~TaskDb() {
 		sqlite3_close(_db);
 	}
-	
+
 	// General purpose query. You can use a labmda function as the second argument
 	// The lambda function parameters are (void* data, int argc, char** argv, char** columnNames)
 	//			The lambda function is what this \/ \/ \/ \/ \/ mess is about
-	bool run(string queryString, int(*callback)(void*, int, char**, char**) = NULL, void* data = NULL) {
+	bool run(std::string queryString, int(*callback)(void*, int, char**, char**) = NULL, void* data = NULL) {
 		char* errorMsg;
-		
+
 		// Perform the query
 		int exRet = sqlite3_exec(this->_db, queryString.c_str(), callback, data, &errorMsg);
 
 		// Check if an error was reported
 		if (exRet != SQLITE_OK) {
-			cerr << "Error performing query: " << errorMsg << std::endl;
+			std::cerr << "Error performing query: " << errorMsg << ". Retcode: " << to_string(exRet) << std::endl;
 			sqlite3_free(errorMsg);
 		}
 #ifdef LOG_SUCCESSFUL_QUERIES
 		else {
-			cerr << "Query Successful." << endl;
+			std::cerr << "Query Successful." << std::endl;
 		}
 #endif
 
@@ -54,12 +62,10 @@ public:
 
 	// Initialize the database table
 	bool init() {
-		string createTables[TABLES] = {
-			"CREATE TABLE IF NOT EXISTS Users (id TEXT NOT NULL UNIQUE, cartid int NOT NULL UNIQUE, name varchar(128) NOT NULL UNIQUE, passhash varchar(1024) NOT NULL)",
-			"CREATE TABLE IF NOT EXISTS Carts (id INTEGER NOT NULL UNIQUE, userid TEXT NOT NULL UNIQUE, PRIMARY KEY(id AUTOINCREMENT))",
-			"CREATE TABLE IF NOT EXISTS Wishlists (id INTEGER NOT NULL UNIQUE, userid TEXT NOT NULL UNIQUE, PRIMARY KEY(id AUTOINCREMENT))",
-			"CREATE TABLE IF NOT EXISTS Products (id TEXT NOT NULL, cartid int NOT NULL, sellerid TEXT NOT NULL, name varchar(128) NOT NULL, description varchar(4096) NOT NULL, quantity int NOT NULL, unitcost double NOT NULL, imgurl varchar(512) NOT NULL, time NUMERIC NOT NULL)",
-			"CREATE TABLE IF NOT EXISTS WantedProducts (id TEXT NOT NULL, cartid int NOT NULL, sellerid TEXT NOT NULL, name varchar(128) NOT NULL, description varchar(4096) NOT NULL, quantity int NOT NULL, unitcost double NOT NULL, imgurl varchar(512) NOT NULL, time NUMERIC NOT NULL)"
+		std::string createTables[TABLES] = {
+			"CREATE TABLE IF NOT EXISTS Tasks (id INTEGER NOT NULL UNIQUE, title varchar(128) NOT NULL, description varchar(4096) NULL, datecreated datetime NOT NULL, partid int NULL, userid int NOT NULL, PRIMARY KEY(id AUTOINCREMENT))",
+			"CREATE TABLE IF NOT EXISTS Parts (id INTEGER NOT NULL UNIQUE, name varchar(25) NOT NULL, serialnumber varchar(50) NOT NULL, PRIMARY KEY(id AUTOINCREMENT))",
+			"CREATE TABLE IF NOT EXISTS Users (id INTEGER NOT NULL UNIQUE, name varchar(50) NOT NULL, PRIMARY KEY(id AUTOINCREMENT))"
 		};
 
 		// Open Database
@@ -67,213 +73,220 @@ public:
 
 		// Ensure the database opens correctly
 		if (exit != SQLITE_OK) {
-			cerr << "Database failed to open." << endl;
-			
+			std::cerr << "Database failed to open. Retcode: " << exit << std::endl;
+
 			throw 1;
 		}
 
 		// Now attempt to run the defined queries
-		for (int i=0;i<TABLES;i++) {
+		for (int i = 0; i < TABLES; i++) {
 			// Just run each query without a callback, there's no need here
-			this->run(createTables[i], NULL);
+			this->run(createTables[i]);
 		}
+
+		seedData();
 
 		// Returns the final exit status. AKA the status of the last query
 		return (exit == SQLITE_OK);
 	}
+
+	void seedData()
+	{
+		stringstream seed;
+		string insert1 = "INSERT INTO Parts (name, serialnumber) VALUES (\"relay\", \"jl8d8890\"); ";
+		string insert2 = "INSERT INTO Parts (name, serialnumber) VALUES (\"seal\", \"jzj000500\"); ";
+		string insert3 = "INSERT INTO Parts (name, serialnumber) VALUES (\"pump\", \"KY-34jjk\"); ";
+		string insert4 = "INSERT INTO Parts (name, serialnumber) VALUES (\"scanner\", \"SR-1500\"); ";
+		string insert5 = "INSERT INTO Parts (name, serialnumber) VALUES (\"sensor\", \"BF-df78ss\"); ";
+	
+		string insert6 = "INSERT INTO Users (name) VALUES (\"Zebadiah\"); ";
+		string insert7 = "INSERT INTO Users (name) VALUES (\"Sebastion\"); ";
+		string insert8 = "INSERT INTO Users (name) VALUES (\"Tom\"); ";
+		string insert9 = "INSERT INTO Users (name) VALUES (\"Kiana\"); ";
+
+		string insert10 = "INSERT INTO Tasks (title, description, datecreated, partid, userid) VALUES (\"seed task\", \"seed description\", \"2024-01-18\", 1, 1); ";
+
+		seed << insert1 << insert2 << insert3 << insert4 << insert5 << insert6 << insert7 << insert8 << insert9 << insert10;
+		this->run(seed.str());
+	}
 	//upoload new products to the cart
-	bool uploadProducts(ID userID, Product_s p, bool wishlist=false) {
+	bool insertTask(Task& t) {
 
-		std::string CartTable = wishlist ? "Wishlists" : "Carts";
-		std::string ProductTable = wishlist ? "WantedProducts" : "Products";
+		std::string TaskTable = "Tasks";
+		std::stringstream insertQuery;
 
-		// Check if user and cart already exist in system, if not, add them
-		stringstream checkQuery;
-		checkQuery << "INSERT INTO "<<CartTable<<" (userid) SELECT \"" << userID <<"\" WHERE NOT EXISTS (SELECT 1 FROM "<<CartTable<<" WHERE userid = \"" << userID << "\");";
-		this->run(checkQuery.str());
-
-        stringstream query;
-        stringstream selectQuery;
-        selectQuery<<"SELECT "<< CartTable <<".id FROM "<< CartTable <<" where "<<CartTable<<".userid=\""<<userID<<"\";";
-        //cout << "Running: " << query.str() << endl;
-        string cartid;
-
-        this->run(selectQuery.str(), [](void* data, int argc, char* argv[], char* colNames[]){
-            // This same block of code will run for each SQL result
-            //cout << "Found: " << argc << " rows" << endl;
-
-            string* cartid=(string*) data;
-
-            // Loop through each row
-            for (int r=0;r<argc;r++) {
-
-                // Build a product
-                if (strcmp(colNames[r], "id") == 0) {
-                    *cartid = argv[r];
-				}
-
-            }
-            return 0;
-        }, (void*)&cartid);
-
-        query << "INSERT INTO " <<ProductTable << "(id,cartid,sellerid,name,description,quantity,unitcost,imgurl,time) VALUES(\""<<p.id<<"\","<< cartid <<",\""<<p.sellerID<<"\",\"" << p.name << "\",\"" << p.description << "\","<<to_string(p.quantity) << "," <<to_string(p.price)<<", \"" << p.imgurl << "\","<<to_string(std::chrono::duration_cast<std::chrono::milliseconds>(p.timeAdded.time_since_epoch()).count())<<");";
-		//cout << query.str() << endl;
-	    return this->run(query.str(),NULL);
-
-        // Return the list of products
-        //return products;
-    }
-
-	// Get list of products by user id
-	vector<Product> loadProducts(ID userID, bool wishlist=false) {
-		std::string CartTable = wishlist ? "Wishlists" : "Carts";
-		std::string ProductTable = wishlist ? "WantedProducts" : "Products";
-
-		stringstream query;
-		query << "SELECT "<<CartTable<<".userid as userid, "<<ProductTable<<".* FROM "<<ProductTable<<" INNER JOIN "<<CartTable<<" ON "<<CartTable<<".id="<<ProductTable<<".cartid WHERE "<<CartTable<<".userid=\"" << userID <<  "\";";
-		//cout << "Running: " << query.str() << endl;
-
-		vector<Product> products;
-
-		this->run(query.str(), [](void* data, int argc, char** argv, char** colNames){
-			// This same block of code will run for each SQL result
-			//cout << "Found: " << argc << " rows" << endl;
-
-			vector<Product>* products = (vector<Product>*)data;
-
-			Product p;
-
-			// Loop through each row
-			for (int r=0;r<argc;r++) {
-	
-				// Build a product
-				if (strcmp(colNames[r], "id") == 0) {
-					p.id = argv[r];
-				} else if (strcmp(colNames[r], "sellerid") == 0) {
-					p.sellerID = argv[r];
-				} else if (strcmp(colNames[r], "name") == 0) {
-					int length = strlen(argv[r]) + 1;
-					strncpy(p.name, argv[r], length);
-				} else if (strcmp(colNames[r], "description") == 0) {
-					int length = strlen(argv[r]) + 1;
-					strncpy(p.description, argv[r], length);
-				} else if (strcmp(colNames[r], "imgurl") == 0) {
-					int length = strlen(argv[r]) + 1;
-					strncpy(p.imgurl, argv[r], length);
-				} else if (strcmp(colNames[r], "quantity") == 0) {
-					p.quantity = atoi(argv[r]);
-				} else if (strcmp(colNames[r], "unitcost") == 0) {
-					p.price = atof(argv[r]);
-				} else if (strcmp(colNames[r], "time") == 0) {
-					p.timeAdded = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(stoll(argv[r])));
-				} 
-
-				//cout << colNames[r] << " : " << argv[r] << endl;
-			}
-
-			products->push_back(p);
-			return 0;
-		}, (void*)&products);
-
-		// Return the list of products
-		return products;
+		insertQuery << "INSERT INTO " << TaskTable << " (title, description, datecreated, partid, userid) VALUES(\"" << t.title << "\"," << "\"" << t.description << "\", \"" << t.datecreated <<"\"," << std::to_string(t.consumedPart.id) << ", " << std::to_string(t.user.id) << ");";
+		std::cout << "Running insert query: " << insertQuery.str() << std::endl;
+		return this->run(insertQuery.str(), NULL);
 	}
+	//get part names from id
+	Part getPart(Task& t)
+	{
+		Part foundPart;
+		string PartTable = "Parts";
 
-	void removeExpired(ID userID) {
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
 		
-		std::stringstream queryCheck;
-		queryCheck << "SELECT Carts.userid as userid, Products.* FROM Products INNER JOIN Carts ON Carts.id=Products.cartid WHERE Carts.userid=\"" << userID <<  "\";";
+		if (!t.consumedPart.id)
+			return Part();
 
-		this->run(queryCheck.str(), [](void* data, int argc, char** argv, char** colNames){
-			Product_s p;
-			ID userID;
-			DB* thisDB = (DB*)data;
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
-			for (int r=0;r<argc;r++) {
-				if (strcmp(colNames[r], "id") == 0) {
-					p.id = argv[r];
-				} else if (strcmp(colNames[r], "time") == 0) {
-					p.timeAdded = std::chrono::time_point<std::chrono::system_clock>(std::chrono::milliseconds(stoll(argv[r])));
-				} else if (strcmp(colNames[r], "userid") == 0) {
-					userID = argv[r];
+			for(int row = 0; row < argc; row++)
+			{
+				Part* foundPart = (Part*)data;
+				
+				if (strcmp(colNames[row], "id") == 0) {
+					foundPart->id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundPart->name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundPart->serialNumber, argv[row], length);
 				}
 			}
 
+			return 0;
+		}, (void*)&foundPart);
 
-			if (p.isExpired())
+		return foundPart;
+		
+	}
+
+	User getUser(int id)
+	{
+		User foundUser;
+		string UsersTable = "Users";
+		stringstream selectQuery;
+
+		selectQuery << "SELECT 1 FROM "<< UsersTable <<" WHERE id == \"" << to_string(id) << "\"";
+
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			User* foundUser = (User*)data;
+
+			for(int row = 0; row < argc; row++)
 			{
-				std::stringstream query;
-				query << "DELETE FROM Products WHERE cartid=(SELECT Carts.id FROM Carts WHERE userid=\"" << userID << "\") AND Products.id=\"" << p.id << "\";";
-				bool worked = thisDB->run(query.str());
+				if (strcmp(colNames[row], "id") == 0) {
+					foundUser->id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundUser->name, argv[row], length);
+				}
 			}
 			return 0;
-		}, (void*)this);
-	}
-	
-	void increaseProductQuantity(ID productID, int wishlist) {
-		std::string ProductTable = wishlist ? "WantedProducts" : "Products";
-
-		stringstream query;
-		query << "UPDATE "<< ProductTable << " SET quantity = quantity + 1 WHERE id = \"" << productID << "\";";
-		bool worked = this->run(query.str());
+		}, (void*)&foundUser);
+		return foundUser;
 	}
 
-	void decreaseProductQuantity(ID productID, int wishlist) {
-		std::string ProductTable = wishlist ? "WantedProducts" : "Products";
+	//get tasks by filter
+	vector<Task> getFilteredTasks(string key, Task::COLUMNS column)
+	{
+		string TaskTable = "Tasks";
+		stringstream selectQuery;
+		string colName;
 
-		stringstream query;
-		stringstream query2;
-		query << "UPDATE "<< ProductTable << " SET quantity = quantity - 1 WHERE id = \"" << productID << "\";";
-		bool worked = this->run(query.str());		
-		query2 << "DELETE FROM "<< ProductTable << " WHERE quantity < 1;";
-		worked = this->run(query2.str());
-	
-	}
+		switch(column)
+		{
+		case 0:
+			colName = "id";
+			break;
+		case 1:
+			colName = "title";
+			break;
+		case 2:
+			colName = "description";
+			break;
+		case 3:
+			colName = "partid";
+			break;
+		default: 
+			colName = "title";
+		}
 
-	bool checkIfExists(ID userID, ID productID, int wishlist) {
-		std::string CartTable = wishlist ? "Wishlists" : "Carts";
-                std::string ProductTable = wishlist ? "WantedProducts" : "Products";
+		vector<Task> tasks;
 
-                stringstream query;
-                query << "SELECT "<<CartTable<<".userid as userid, "<<ProductTable<<".* FROM "<<ProductTable<<" INNER JOIN "<<CartTable<<" ON "<<CartTable<<".id="<<ProductTable<<".cartid WHERE "<<CartTable<<".userid=\"" << userID <<  "\" AND " << ProductTable << ".id=\"" << productID << "\";";
-                //cout << "Running: " << query.str() << endl;
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "'%" << key << "%'";
+		cout << "Running filter query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
-                vector<Product> products;
+			vector<Task>* tasks = (vector<Task>*)data;
+			cout << "Entered getFilteredTasks lambda, ";
+			Task fromDbQuery;
 
-		// We actually search for a product quantity variable, since that's what we want
-		bool foundProduct = false;
-
-                this->run(query.str(), [](void* data, int argc, char** argv, char** colNames){
-                        // This same block of code will run for each SQL result
-                        //cout << "Found: " << argc << " rows" << endl;
-			bool* foundProduct = (bool*)data;
-
-                        // Loop through each row
-                        for (int r=0;r<argc;r++) {
-
-                                // Build a product
-                                if (strcmp(colNames[r], "quantity") == 0) {
-                                        *foundProduct = true;
+			for(int row = 0; row < argc; row++)
+			{
+				
+				if (strcmp(colNames[row], "id") == 0) {
+					fromDbQuery.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "title") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.title, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "description") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.description, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "datecreated") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.datecreated, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partid") == 0) {
+					fromDbQuery.consumedPart.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "userid") == 0) {
+					fromDbQuery.user.id = stoi(argv[row]);
 				}
 			}
-
-			return (int)*foundProduct;
-		}, (void*)&foundProduct);
-
-		return foundProduct;
+			tasks->push_back(fromDbQuery);
+			return 0;
+		}, (void*)&tasks);
+		cout << "Found " << tasks.size() << " matches, ";
+		cout << "Getting part data, ";
+		for(Task & task : tasks)
+		{
+			task.consumedPart = this->getPart(task);
+			task.user = this->getUser(task.user.id);
+		}
+		return tasks;
 	}
+	//Update task
+	bool updateTask(Task& withNewDetails)
+	{
+		string TaskTable = "Tasks";
+		stringstream updateQuery;
 
+		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << ", userid = " << withNewDetails.user.id << " WHERE id == " << to_string(withNewDetails.id);
+		cout << "running update query";
+		cout << updateQuery.str();
+		if(this->run(updateQuery.str()))
+			return true;
+		else
+			return false;
+	}
+	//Delete a task
+	bool deleteTask(string id)
+	{
+		stringstream deleteQuery;
+		string TaskTable = "Tasks";
+
+		if(!id.empty())
+		{
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id == " << id;
+			cout << "Running query: " << deleteQuery.str() << std::endl;
+			if(this->run(deleteQuery.str()))
+				return true;
+		}
+		return false;
+	}
 };
 
 #endif
 
-// Useful queries
-
-	// Example 1: Find user using product ID
-	// SELECT Users.* FROM Products INNER JOIN Carts ON Carts.id=Products.cartid INNER JOIN Users ON Users.id=Carts.userid WHERE Products.id=334;
-
-	// Example 2: Find all products in a cart using the userID
-	// SELECT Products.* FROM Products INNER JOIN Carts ON Carts.id=Products.cartid where Carts.userid=323
-
-	// Example 3: Find all products in a cart using the username
-	// SELECT Products.* FROM Products INNER JOIN Carts ON Carts.id=Products.cartid INNER JOIN Users ON Users.id=Carts.userid WHERE Users.name="John Ron"
