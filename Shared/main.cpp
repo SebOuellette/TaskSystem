@@ -45,10 +45,11 @@ int main()
 			// Redirect to the cart page
             res.code = 200;
 		
-			res.write(loadFile(res, "", "help.html"));
+			      res.write(loadFile(res, "", "help.html"));
 
             res.end();
         });
+
 
 
 	CROW_ROUTE(app, "/edit/<int>") // Get a current task by id
@@ -89,6 +90,7 @@ int main()
 			}
 
 			res.end();
+			
 		});
 
 	CROW_ROUTE(app, "/delete") // Replace exisitng task
