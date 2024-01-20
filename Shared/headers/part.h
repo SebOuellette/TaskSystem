@@ -21,6 +21,7 @@ typedef struct _Part {
 		if (this == &other)
 			return *this;
 
+		this->id = other.id;
 		std::copy(other.name, other.name + PART_NAME_LENGTH, this->name);
 		std::copy(other.serialNumber, other.serialNumber + PART_SERIAL_LENGTH, this->serialNumber);
 		return *this;

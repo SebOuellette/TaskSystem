@@ -47,7 +47,7 @@ public:
 
 		// Check if an error was reported
 		if (exRet != SQLITE_OK) {
-			std::cerr << "Error performing query: " << errorMsg << std::endl;
+			std::cerr << "Error performing query: " << errorMsg << ". Retcode: " << to_string(exRet) << std::endl;
 			sqlite3_free(errorMsg);
 		}
 #ifdef LOG_SUCCESSFUL_QUERIES
@@ -113,17 +113,10 @@ public:
 	bool insertTask(Task& t) {
 
 		std::string TaskTable = "Tasks";
-
-		// Check if task already exist in system, if not, add them
-		std::stringstream checkQuery;
 		std::stringstream insertQuery;
 
-		checkQuery << "SELECT EXISTS (SELECT 1 FROM "<< TaskTable <<" WHERE id == " << std::to_string(t.id) << ");";
-		if(this->run(checkQuery.str()))
-			return false;
-
-		insertQuery << "INSERT INTO " << TaskTable << " (title,description,partid) VALUES(\"" << t.title << "\"," << "\"" << t.description << "\"," << std::to_string(t.consumedPart.id) << ");";
-
+		insertQuery << "INSERT INTO " << TaskTable << " (title, description, datecreated, partid, userid) VALUES(\"" << t.title << "\"," << "\"" << t.description << "\", \"" << t.datecreated <<"\"," << std::to_string(t.consumedPart.id) << ", " << std::to_string(t.user.id) << ");";
+		std::cout << "Running insert query: " << insertQuery.str() << std::endl;
 		return this->run(insertQuery.str(), NULL);
 	}
 	//get part names from id
@@ -133,11 +126,12 @@ public:
 		string PartTable = "Parts";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == \"" << to_string(t.consumedPart.id) << "\"";
-
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
+		
 		if (!t.consumedPart.id)
 			return Part();
 
+		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			for(int row = 0; row < argc; row++)
@@ -157,7 +151,7 @@ public:
 				}
 			}
 
-			return 1;
+			return 0;
 		}, (void*)&foundPart);
 
 		return foundPart;
@@ -186,7 +180,7 @@ public:
 					strncpy(foundUser->name, argv[row], length);
 				}
 			}
-			return 1;
+			return 0;
 		}, (void*)&foundUser);
 		return foundUser;
 	}
@@ -218,14 +212,16 @@ public:
 
 		vector<Task> tasks;
 
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "\"%" << key << "%\"";
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "'%" << key << "%'";
+		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			vector<Task>* tasks = (vector<Task>*)data;
+			cout << "Entered getFilteredTasks lambda, ";
+			Task fromDbQuery;
 
 			for(int row = 0; row < argc; row++)
 			{
-				Task fromDbQuery;
 				
 				if (strcmp(colNames[row], "id") == 0) {
 					fromDbQuery.id = stoi(argv[row]);
@@ -238,20 +234,27 @@ public:
 					int length = strlen(argv[row]) + 1;
 					strncpy(fromDbQuery.description, argv[row], length);
 				}
+				else if (strcmp(colNames[row], "datecreated") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.datecreated, argv[row], length);
+				}
 				else if (strcmp(colNames[row], "partid") == 0) {
 					fromDbQuery.consumedPart.id = stoi(argv[row]);
 				}
-
-				tasks->push_back(fromDbQuery);
+				else if (strcmp(colNames[row], "userid") == 0) {
+					fromDbQuery.user.id = stoi(argv[row]);
+				}
 			}
-			return 1;
+			tasks->push_back(fromDbQuery);
+			return 0;
 		}, (void*)&tasks);
-
+		cout << "Found " << tasks.size() << " matches, ";
+		cout << "Getting part data, ";
 		for(Task & task : tasks)
 		{
 			task.consumedPart = this->getPart(task);
+			task.user = this->getUser(task.user.id);
 		}
-
 		return tasks;
 	}
 	//Update task
@@ -260,8 +263,9 @@ public:
 		string TaskTable = "Tasks";
 		stringstream updateQuery;
 
-		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << " WHERE taskid == " << to_string(withNewDetails.id);
+		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << ", userid = " << withNewDetails.user.id << " WHERE id == " << to_string(withNewDetails.id);
 		cout << "running update query";
+		cout << updateQuery.str();
 		if(this->run(updateQuery.str()))
 			return true;
 		else
@@ -275,7 +279,8 @@ public:
 
 		if(!id.empty())
 		{
-			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id = " << id;
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id == " << id;
+			cout << "Running query: " << deleteQuery.str() << std::endl;
 			if(this->run(deleteQuery.str()))
 				return true;
 		}

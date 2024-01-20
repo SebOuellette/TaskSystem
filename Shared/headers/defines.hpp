@@ -9,6 +9,7 @@
 // Task Defines
 #define TASK_TITLE_LENGTH 128
 #define DESCRIPTION_LENGTH 4096
+#define DATE_LENGTH 23
 
 // Part Defines
 #define PART_NAME_LENGTH 25

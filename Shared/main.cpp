@@ -67,7 +67,7 @@ int main()
 
 
 
-				//test db method
+				//test db method ------- WORKING
 				bool status = false;
 				cout << "starting test";
 				string title = "testTask - PATCH";
@@ -76,11 +76,11 @@ int main()
 				strncpy(testTask.title, title.c_str(), title.length());
 				strncpy(testTask.description, desc.c_str(), desc.length());
 				testTask.consumedPart.id = 1;
-				testTask.userId = 1;
+				testTask.user.id = 1;
+				testTask.id = 1;
 				cout << "entering updatetask";
 				status = db.updateTask(testTask);
-				res.write("success: " + status);
-				res.end();
+				res.write("success: " + to_string((int)status));
 			}
 
 			res.end();
@@ -98,17 +98,24 @@ int main()
 
 
 
-				//test db method
+				//test db method ------- WORKING
+				bool status = false;
 				string title = "testTask - POST";
 				string desc = "this is a test task";
+				string datecreated = "2024-01-18";
 				Task testTask = Task(Part());
 				strncpy(testTask.title, title.c_str(), title.length());
 				strncpy(testTask.description, desc.c_str(), desc.length());
+				strncpy(testTask.datecreated, datecreated.c_str(), datecreated.length());
 				testTask.consumedPart.id = 1;
-				testTask.userId = 1;
+				testTask.user.id = 1;
+				
+				
 
-				db.insertTask(testTask);
-
+				cout << "Starting insertTask, ";
+				status = db.insertTask(testTask);
+				res.write("success: " + to_string((int)status));
+				
 
 			} else if (req.method == HTTPMethod::Put) {
 				// Check if task exists
@@ -123,22 +130,32 @@ int main()
 
 
 				//test db method
+				bool status = false;
 				string title = "testTask - PUT";
 				string desc = "this is a test task";
+				string datecreated = "2024-01-18";
 				Task testTask = Task(Part());
 				strncpy(testTask.title, title.c_str(), title.length());
 				strncpy(testTask.description, desc.c_str(), desc.length());
+				strncpy(testTask.datecreated, datecreated.c_str(), datecreated.length());
 				testTask.consumedPart.id = 1;
-				testTask.userId = 1;
+				testTask.user.id = 1;
 				//inserting so there is something to delete, then replace.
+				cout << "Starting insertTask, ";
 				db.insertTask(testTask);
+				cout << "Starting getFilteredTasks, ";
 				vector<Task> insertedTask = db.getFilteredTasks("PUT", Task::COLUMNS::TITLE);
 				if(insertedTask.size())
 				{
-					db.deleteTask(to_string(insertedTask[0].id));
-					db.insertTask(testTask);
+					cout << "found " << insertedTask.size() << " entries, ";
+					cout << "Starting deleteTask, ";
+					status = db.deleteTask(to_string(insertedTask[0].id));
+					status = db.insertTask(testTask);
+					res.write("success: " + to_string((int)status));
 				}
 			}
+
+			res.end();
 		});
 
 	CROW_ROUTE(app, "/delete") // Replace exisitng task
