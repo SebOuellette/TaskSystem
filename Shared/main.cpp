@@ -31,7 +31,9 @@ int main()
         ([&db](const request& req, response& res){
 			// Redirect to the cart page
             res.code = 200;
-		
+
+			
+
 			res.write(loadFile(res, "", "home.html"));
 
             res.end();
@@ -55,12 +57,33 @@ int main()
 
 			if (req.method == HTTPMethod::Get) {
 				// read database
+				
 
 			} else if (req.method == HTTPMethod::Patch) {
 				// Update only changed elements
+
+
+
+
+
+
+				//test db method
+				bool status = false;
+				cout << "starting test";
+				string title = "testTask - PATCH";
+				string desc = "this is a test task";
+				Task testTask = Task(Part());
+				strncpy(testTask.title, title.c_str(), title.length());
+				strncpy(testTask.description, desc.c_str(), desc.length());
+				testTask.consumedPart.id = 1;
+				testTask.userId = 1;
+				cout << "entering updatetask";
+				status = db.updateTask(testTask);
+				res.write("success: " + status);
+				res.end();
 			}
 
-			
+			res.end();
 		});
 
 	CROW_ROUTE(app, "/add") // Upload a new task
@@ -69,14 +92,53 @@ int main()
 			if (req.method == HTTPMethod::Post) {
 				// Check if task exists
 				// If it does, return 409
+
+
+
+
+
+
+				//test db method
+				string title = "testTask - POST";
+				string desc = "this is a test task";
+				Task testTask = Task(Part());
+				strncpy(testTask.title, title.c_str(), title.length());
+				strncpy(testTask.description, desc.c_str(), desc.length());
+				testTask.consumedPart.id = 1;
+				testTask.userId = 1;
+
+				db.insertTask(testTask);
+
+
 			} else if (req.method == HTTPMethod::Put) {
 				// Check if task exists
 				// if not, return "not found"
 
 				// Replace existing task with provided data
-			}
 
-			
+
+
+
+
+
+
+				//test db method
+				string title = "testTask - PUT";
+				string desc = "this is a test task";
+				Task testTask = Task(Part());
+				strncpy(testTask.title, title.c_str(), title.length());
+				strncpy(testTask.description, desc.c_str(), desc.length());
+				testTask.consumedPart.id = 1;
+				testTask.userId = 1;
+				//inserting so there is something to delete, then replace.
+				db.insertTask(testTask);
+				vector<Task> insertedTask = db.getFilteredTasks("PUT", Task::COLUMNS::TITLE);
+				if(insertedTask.size())
+				{
+					db.deleteTask(to_string(insertedTask[0].id));
+					db.insertTask(testTask);
+				}
+			}
 		});
 
 	CROW_ROUTE(app, "/delete") // Replace exisitng task
@@ -84,7 +146,7 @@ int main()
         ([&db](const request& req, response& res){
 
 			// Delete task if exists in database
-
+			
 
 		});
 

@@ -13,14 +13,15 @@ typedef struct _Task {
 	char description[DESCRIPTION_LENGTH];
 	Part consumedPart;
 	int quantityConsumed;
+	ID userId;
 
 	std::chrono::system_clock::time_point timeAdded;
-	//0: id, 1: title, 2: description, 3: partid
-	enum COLUMNS {IDCOL, TITLE, DESCRIPTION, PARTID};
+	//0: id, 1: title, 2: description, 3: partid, 4: userid
+	enum COLUMNS {IDCOL, TITLE, DESCRIPTION, PARTID, USERID};
 
 	_Task() : timeAdded(std::chrono::system_clock::now()) {}
 
-	_Task(Part& part) {
+	_Task(Part part) {
 		this->consumedPart = part;
 	}
 

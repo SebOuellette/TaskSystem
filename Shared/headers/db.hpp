@@ -3,6 +3,7 @@
 #ifndef DB_HPP
 #define DB_HPP
 
+#include "user.h"
 #include <string.h>
 #include <vector>
 #include "defines.hpp"
@@ -62,9 +63,9 @@ public:
 	// Initialize the database table
 	bool init() {
 		std::string createTables[TABLES] = {
-			"CREATE TABLE IF NOT EXISTS Tasks (id INTEGER NOT NULL UNIQUE, title varchar(128) NOT NULL, description varchar(4096) NULL, partid int NULL, PRIMARY KEY(id AUTOINCREMENT))",
+			"CREATE TABLE IF NOT EXISTS Tasks (id INTEGER NOT NULL UNIQUE, title varchar(128) NOT NULL, description varchar(4096) NULL, datecreated datetime NOT NULL, partid int NULL, userid int NOT NULL, PRIMARY KEY(id AUTOINCREMENT))",
 			"CREATE TABLE IF NOT EXISTS Parts (id INTEGER NOT NULL UNIQUE, name varchar(25) NOT NULL, serialnumber varchar(50) NOT NULL, PRIMARY KEY(id AUTOINCREMENT))",
-			"CREATE TABLE IF NOT EXISTS Users (id INTEGER NOT NULL UNIQUE, name varchar(50) NOT NULL, PRIMARY KEY(id AUTOMINCREMENT))"
+			"CREATE TABLE IF NOT EXISTS Users (id INTEGER NOT NULL UNIQUE, name varchar(50) NOT NULL, PRIMARY KEY(id AUTOINCREMENT))"
 		};
 
 		// Open Database
@@ -83,8 +84,30 @@ public:
 			this->run(createTables[i]);
 		}
 
+		seedData();
+
 		// Returns the final exit status. AKA the status of the last query
 		return (exit == SQLITE_OK);
+	}
+
+	void seedData()
+	{
+		stringstream seed;
+		string insert1 = "INSERT INTO Parts (name, serialnumber) VALUES (\"relay\", \"jl8d8890\"); ";
+		string insert2 = "INSERT INTO Parts (name, serialnumber) VALUES (\"seal\", \"jzj000500\"); ";
+		string insert3 = "INSERT INTO Parts (name, serialnumber) VALUES (\"pump\", \"KY-34jjk\"); ";
+		string insert4 = "INSERT INTO Parts (name, serialnumber) VALUES (\"scanner\", \"SR-1500\"); ";
+		string insert5 = "INSERT INTO Parts (name, serialnumber) VALUES (\"sensor\", \"BF-df78ss\"); ";
+	
+		string insert6 = "INSERT INTO Users (name) VALUES (\"Zebadiah\"); ";
+		string insert7 = "INSERT INTO Users (name) VALUES (\"Sebastion\"); ";
+		string insert8 = "INSERT INTO Users (name) VALUES (\"Tom\"); ";
+		string insert9 = "INSERT INTO Users (name) VALUES (\"Kiana\"); ";
+
+		string insert10 = "INSERT INTO Tasks (title, description, datecreated, partid, userid) VALUES (\"seed task\", \"seed description\", \"2024-01-18\", 1, 1); ";
+
+		seed << insert1 << insert2 << insert3 << insert4 << insert5 << insert6 << insert7 << insert8 << insert9 << insert10;
+		this->run(seed.str());
 	}
 	//upoload new products to the cart
 	bool insertTask(Task& t) {
@@ -95,7 +118,7 @@ public:
 		std::stringstream checkQuery;
 		std::stringstream insertQuery;
 
-		checkQuery << "SELECT EXISTS (SELECT 1 FROM "<< TaskTable <<" WHERE taskid == " << std::to_string(t.id) << ");";
+		checkQuery << "SELECT EXISTS (SELECT 1 FROM "<< TaskTable <<" WHERE id == " << std::to_string(t.id) << ");";
 		if(this->run(checkQuery.str()))
 			return false;
 
@@ -110,14 +133,29 @@ public:
 		string PartTable = "Parts";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE partid == \"" << to_string(t.consumedPart.id) << "\"";
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == \"" << to_string(t.consumedPart.id) << "\"";
 
 		if (!t.consumedPart.id)
 			return Part();
 
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
-			Part foundPart = *(Part*)data;
+			for(int row = 0; row < argc; row++)
+			{
+				Part* foundPart = (Part*)data;
+				
+				if (strcmp(colNames[row], "id") == 0) {
+					foundPart->id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundPart->name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundPart->serialNumber, argv[row], length);
+				}
+			}
 
 			return 1;
 		}, (void*)&foundPart);
@@ -125,6 +163,34 @@ public:
 		return foundPart;
 		
 	}
+
+	User getUser(int id)
+	{
+		User foundUser;
+		string UsersTable = "Users";
+		stringstream selectQuery;
+
+		selectQuery << "SELECT 1 FROM "<< UsersTable <<" WHERE id == \"" << to_string(id) << "\"";
+
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			User* foundUser = (User*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				if (strcmp(colNames[row], "id") == 0) {
+					foundUser->id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundUser->name, argv[row], length);
+				}
+			}
+			return 1;
+		}, (void*)&foundUser);
+		return foundUser;
+	}
+
 	//get tasks by filter
 	vector<Task> getFilteredTasks(string key, Task::COLUMNS column)
 	{
@@ -195,7 +261,8 @@ public:
 		stringstream updateQuery;
 
 		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << " WHERE taskid == " << to_string(withNewDetails.id);
-		if (this->run(updateQuery.str()))
+		cout << "running update query";
+		if(this->run(updateQuery.str()))
 			return true;
 		else
 			return false;
@@ -208,7 +275,7 @@ public:
 
 		if(!id.empty())
 		{
-			deleteQuery << "DELETE FROM " << TaskTable << " WHERE TaskId = " << id;
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id = " << id;
 			if(this->run(deleteQuery.str()))
 				return true;
 		}
