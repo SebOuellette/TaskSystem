@@ -23,6 +23,7 @@ typedef int ID;
 
 // HTML templates. Used for adding dynamically generated content to the html pages from server-side
 #define TASK_TEMPLATE "<!--[[NEXT-TASK-ITEM]]-->"
+#define PART_TEMPLATE "<!--[[PARTS_LIST]]-->"
 #define HOME_LINK_TEMPLATE "[[HOME_LINK]]"
 
 

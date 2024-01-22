@@ -16,6 +16,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 // Using sqlite https://www.geeksforgeeks.org/sql-using-c-c-and-sqlite/
 
 // debug

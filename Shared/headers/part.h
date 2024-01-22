@@ -11,8 +11,9 @@ typedef struct _Part {
 	char name[PART_NAME_LENGTH];
 	char serialNumber[PART_SERIAL_LENGTH];
 
-	std::chrono::system_clock::time_point timeAdded;
+	
 	enum COLUMNS { IDCOL, NAME, SERIALNUMBER };
+	std::chrono::system_clock::time_point timeAdded;
 
 	_Part() : timeAdded(std::chrono::system_clock::now()) {}
 
@@ -33,5 +34,19 @@ typedef struct _Part {
 	}
 } Part;
 
+// Function for easily creating a new part
+Part newPart(ID id, std::string name, std::string serialNum) {
+	Part newp;
+
+	// copy id
+	newp.id = id;
+	
+	// copy name and serial number
+	memcpy(newp.name, name.c_str(), PART_NAME_LENGTH);
+	memcpy(newp.serialNumber, name.c_str(), PART_SERIAL_LENGTH);
+
+	// return newly created struct
+	return newp;
+}
 
 #endif
