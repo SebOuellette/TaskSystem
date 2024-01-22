@@ -30,16 +30,11 @@ int main()
 
 	// List of parts in the system (example)
 	Part parts[PART_COUNT];
-
 	parts[0] = newPart(1, "Part1", "SN-29494");
 	parts[1] = newPart(2, "Part2", "SN-4377593");
 	parts[2] = newPart(3, "Part3", "SN-6947493");
 	parts[3] = newPart(4, "Part4", "SN-5857374");
 	parts[4] = newPart(5, "Part5", "SN-6474757");
-	
-	
-
-	
 	
 
 	CROW_ROUTE(app, "/") // Index page
@@ -53,7 +48,9 @@ int main()
 			// // Add all parts to the part dropdown
 			for (int i=0;i<PART_COUNT;i++) {
 				std::stringstream result;
+				// Build new option, append template at the end to allow for another loop
 				result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << "</option>" << PART_TEMPLATE;
+				// replace the template with our new html element
 				home = replaceTemplates(home, PART_TEMPLATE, result.str());
 			}
 		
@@ -109,16 +106,21 @@ int main()
 				Part* p = &t.consumedPart;
 				User* u = &t.user;
 
-				// Convert JSON data to raw data for Task struct
-				
+				///    Convert JSON data to raw data for Task struct
+				// Parts
 				p->id = parsed["id"].i(); //atoi(id.c_str());
 				memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
 				
+				// User
 				u->id = parsed["assigned"].i();
 				memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
+
+				// Task
 				memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
 				memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
 
+
+				// Debug print everything
 				std::cout << "  Part:" << std::endl << "Part ID:" << p->id << std::endl << "Part Name: " << p->name << std::endl <<
 				"  User:" << std::endl << "User ID: " << u->id << std::endl << "User Name:" << u->name << std::endl << 
 				"  Task: " << std::endl << "Task Title: " << t.title << std::endl << "Description: " << t.description << std::endl;

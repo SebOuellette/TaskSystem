@@ -328,8 +328,6 @@
 
     <script type="text/javascript" charset="utf-8">
       function submitReport() {
-        let partID = document.getElementById("category").value;
-
         fetch(`${window.location.href}add`, {
           method: "POST",
           body: JSON.stringify({
