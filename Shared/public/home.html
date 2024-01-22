@@ -264,11 +264,11 @@
               >Assignee</span
             >
             <select id="assigned" name="category" aria-placeholder="assigned">
-              <option value="category1">Zebadiah</option>
-              <option value="category2">Tom</option>
-              <option value="category3">Kiana</option>
-              <option value="category4">Sebastion</option>
-              <option value="category5">N/A</option>
+              <option value="1">Zebadiah</option>
+              <option value="2">Tom</option>
+              <option value="3">Kiana</option>
+              <option value="4">Sebastian</option>
+              <option value="N/A">N/A</option>
             </select>
           </div>
           <div class="row">
@@ -328,14 +328,18 @@
 
     <script type="text/javascript" charset="utf-8">
       function submitReport() {
-        fetch("https://jsonplaceholder.typicode.com/todos", {
+        let partID = document.getElementById("category").value;
+
+        fetch(`${window.location.href}add`, {
           method: "POST",
           body: JSON.stringify({
-            title: document.getElementById("title").innerText,
-            Description: document.getElementById("description").innerText,
-            Part: document.getElementById("category").innerText,
-            Assigned: document.getElementById("assigned").innerText,
-            value: document.getElementById("value").value,
+            id: document.getElementById("category").value, // Read the value of the selected element (works)
+            part: document.getElementById("category").options[document.getElementById("category").options.selectedIndex].innerText,
+            title: document.getElementById("title").value,
+            description: document.getElementById("description").value,
+            assigned: document.getElementById("assigned").value,
+            assignedName: document.getElementById("assigned").options[document.getElementById("assigned").options.selectedIndex].innerText
+            //value: document.getElementById("value").value
           }),
           headers: {
             "Content-type": "application/json; charset=UTF-8",

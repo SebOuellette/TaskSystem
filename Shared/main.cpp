@@ -53,7 +53,7 @@ int main()
 			// // Add all parts to the part dropdown
 			for (int i=0;i<PART_COUNT;i++) {
 				std::stringstream result;
-				result << "<option value=\"category" << i << "\">" << parts[i].name << "</option>" << PART_TEMPLATE;
+				result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << "</option>" << PART_TEMPLATE;
 				home = replaceTemplates(home, PART_TEMPLATE, result.str());
 			}
 		
@@ -81,13 +81,7 @@ int main()
 
 			if (req.method == crow::HTTPMethod::GET) {
 				// read database
-				const crow::json::rvalue& parsed = crow::json::load(req.body);
-
-				Task t;
-
-				t.id = atoi(id.c_str());
-				memcpy(t.title,			parsed["title"].s().s_,		TASK_TITLE_LENGTH);
-				memcpy(t.description,	parsed["Description"].s().s_,	DESCRIPTION_LENGTH);
+				
 				
 				// Assigned
 				// Category
@@ -106,6 +100,28 @@ int main()
 			if (req.method == crow::HTTPMethod::POST) {
 				// Check if task exists
 				// If it does, return 409
+				// Otherwise continue
+
+				// build JSON object from body
+				const crow::json::rvalue& parsed = crow::json::load(req.body);
+				// Create task object from JSON data
+				Task t;
+				Part* p = &t.consumedPart;
+				User* u = &t.user;
+
+				// Convert JSON data to raw data for Task struct
+				
+				p->id = parsed["id"].i(); //atoi(id.c_str());
+				memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
+				
+				u->id = parsed["assigned"].i();
+				memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
+				memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
+				memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
+
+				std::cout << "  Part:" << std::endl << "Part ID:" << p->id << std::endl << "Part Name: " << p->name << std::endl <<
+				"  User:" << std::endl << "User ID: " << u->id << std::endl << "User Name:" << u->name << std::endl << 
+				"  Task: " << std::endl << "Task Title: " << t.title << std::endl << "Description: " << t.description << std::endl;
 			} else if (req.method == crow::HTTPMethod::PUT) {
 				// Check if task exists
 				// if not, return "not found"
