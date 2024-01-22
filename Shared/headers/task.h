@@ -11,16 +11,17 @@ typedef struct _Task {
 	ID id;
 	char title[TASK_TITLE_LENGTH];
 	char description[DESCRIPTION_LENGTH];
+	char datecreated[DATE_LENGTH];
 	Part consumedPart;
-	int quantityConsumed;
+	User user;
 
 	std::chrono::system_clock::time_point timeAdded;
-	//0: id, 1: title, 2: description, 3: partid
-	enum COLUMNS {IDCOL, TITLE, DESCRIPTION, PARTID};
+	//0: id, 1: title, 2: description, 3: partid, 4: userid
+	enum COLUMNS {IDCOL, TITLE, DESCRIPTION, PARTID, USERID};
 
 	_Task() : timeAdded(std::chrono::system_clock::now()) {}
 
-	_Task(Part& part) {
+	_Task(Part part) {
 		this->consumedPart = part;
 	}
 
@@ -47,10 +48,12 @@ typedef struct _Task {
 		if (this == &other)
 			return *this;
 
+		this->id = other.id;
 		std::copy(other.title, other.title + TASK_TITLE_LENGTH, this->title);
 		std::copy(other.description, other.description + DESCRIPTION_LENGTH, this->description);
+		std::copy(other.datecreated, other.datecreated + DATE_LENGTH, this->datecreated);
 		this->consumedPart = other.consumedPart;
-		this->quantityConsumed = other.quantityConsumed;
+		this->user = other.user;
 		return *this;
 	}
 

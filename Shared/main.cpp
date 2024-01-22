@@ -9,9 +9,9 @@
 #include <string>
 #include <random>
 #include <ctime>
+#include "headers/crow_all.h"
 
 #define PART_COUNT 5
-
 
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
@@ -29,12 +29,13 @@ int main()
 
 
 	// List of parts in the system (example)
-	//Part parts[PART_COUNT];
-	// parts[0] = Part{0, "Part1", "SN-4577374", 5};
-	// parts[1] = Part{2, "Part2", "SN-4377593", 5};
-	// parts[2] = Part{3, "Part3", "SN-6947493", 5};
-	// parts[3] = Part{4, "Part4", "SN-5857374", 5};
-	// parts[4] = Part{5, "Part5", "SN-6474757", 5};
+	Part parts[PART_COUNT];
+
+	parts[0] = newPart(1, "Part1", "SN-29494");
+	parts[1] = newPart(2, "Part2", "SN-4377593");
+	parts[2] = newPart(3, "Part3", "SN-6947493");
+	parts[3] = newPart(4, "Part4", "SN-5857374");
+	parts[4] = newPart(5, "Part5", "SN-6474757");
 	
 	
 
@@ -43,18 +44,18 @@ int main()
 
 	CROW_ROUTE(app, "/") // Index page
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
-        ([&db](const crow::request& req, crow::response& res){
+        ([&db, &parts](const crow::request& req, crow::response& res){
 			// Redirect to the cart page
             res.code = 200;
 
 			std::string home = loadFile(res, "", "home.html");
 			
 			// // Add all parts to the part dropdown
-			// for (int i=0;i<PART_COUNT;i++) {
-			// 	std::stringstream result;
-			// 	result << "<option value=\"category" << i << "\">" << parts[i].name << "</option>" << PART_TEMPLATE;
-			// 	home = replaceTemplates(home, PART_TEMPLATE, result.str());
-			// }
+			for (int i=0;i<PART_COUNT;i++) {
+				std::stringstream result;
+				result << "<option value=\"category" << i << "\">" << parts[i].name << "</option>" << PART_TEMPLATE;
+				home = replaceTemplates(home, PART_TEMPLATE, result.str());
+			}
 		
 			res.write(home);
 
@@ -68,7 +69,7 @@ int main()
 			// Redirect to the cart page
             res.code = 200;
 		
-			res.write(loadFile(res, "", "help.html"));
+			      res.write(loadFile(res, "", "help.html"));
 
             res.end();
         });
@@ -92,9 +93,11 @@ int main()
 				// Category
 			} else if (req.method == crow::HTTPMethod::PATCH) {
 				// Update only changed elements
+
+
 			}
 
-			
+			res.end();
 		});
 
 	CROW_ROUTE(app, "/add") // Upload a new task
@@ -108,8 +111,11 @@ int main()
 				// if not, return "not found"
 
 				// Replace existing task with provided data
+
+
 			}
 
+			res.end();
 			
 		});
 
