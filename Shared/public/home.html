@@ -254,11 +254,12 @@
         </div>
         <div class="column2">
           <div class="row">
-            <span style="margin-bottom: 5px" id="categorylable">Category</span>
+            <span style="margin-bottom: 5px" id="categorylable">Parts</span>
             <select id="category" name="category">
               <option value="category1">Category 1</option>
               <option value="category2">Category 2</option>
               <option value="category3">Category 3</option>
+              <!--[[PARTS_LIST]]-->
             </select>
             <span
               style="margin-top: 10px; margin-bottom: 5px"
@@ -335,7 +336,7 @@
           body: JSON.stringify({
             title: document.getElementById("title").innerText,
             Description: document.getElementById("description").innerText,
-            Category: document.getElementById("category").innerText,
+            Part: document.getElementById("category").innerText,
             Assigned: document.getElementById("assigned").innerText,
             value: document.getElementById("value").value,
           }),

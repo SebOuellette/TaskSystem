@@ -14,6 +14,7 @@
 #include <sstream>
 #include <cstdlib>
 #include <cstdio>
+#include <cstring>
 // Using sqlite https://www.geeksforgeeks.org/sql-using-c-c-and-sqlite/
 
 // debug
@@ -162,11 +163,11 @@ public:
 				}
 				else if (strcmp(colNames[row], "title") == 0) {
 					int length = strlen(argv[row]) + 1;
-					strncpy_s(fromDbQuery.title, argv[row], length);
+					strncpy(fromDbQuery.title, argv[row], length);
 				}
 				else if (strcmp(colNames[row], "description") == 0) {
 					int length = strlen(argv[row]) + 1;
-					strncpy_s(fromDbQuery.description, argv[row], length);
+					strncpy(fromDbQuery.description, argv[row], length);
 				}
 				else if (strcmp(colNames[row], "partid") == 0) {
 					fromDbQuery.consumedPart.id = std::stoi(argv[row]);
