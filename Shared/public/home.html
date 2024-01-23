@@ -353,9 +353,16 @@
     <script type="text/javascript" charset="utf-8">
       // Function to submit a task on submit button click event to the server.
       function submitReport() {
-        fetch("/add", {
+        fetch(`${window.location.href}add`, {
           method: "POST",
           body: JSON.stringify({
+            id: document.getElementById("category").value, // Read the value of the selected element (works)
+            part: document.getElementById("category").options[document.getElementById("category").options.selectedIndex].innerText,
+            title: document.getElementById("title").value,
+            description: document.getElementById("description").value,
+            assigned: document.getElementById("assigned").value,
+            assignedName: document.getElementById("assigned").options[document.getElementById("assigned").options.selectedIndex].innerText
+            //value: document.getElementById("value").value
             title: document.getElementById("title").innerText,
             description: document.getElementById("description").innerText,
             Part: document.getElementById("Part").innerText,
