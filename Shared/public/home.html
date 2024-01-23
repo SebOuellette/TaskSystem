@@ -88,7 +88,7 @@
         color: #ffffff;
       }
 
-      /* Set max height for the category dropdown */
+      /* Set max height for the Part dropdown */
       .row select {
         max-height: 70px;
       }
@@ -253,11 +253,11 @@
     <div style="margin-bottom: 20px"></div>
     <h2 style="margin-left: 20px; display: inline">Maintenance Tasks</h2>
     <div class="header">
-      <a href="#">Help?</a>
+      <a href="http://127.0.0.1:8080/help">Help?</a>
     </div>
 
     <div class="container">
-      <div id="taskValue" value="1" class="bottom-half" data-id="1">
+      <div id="task" class="bottom-half" taskid="1">
         <div class="column">
           <div class="row">
             <input
@@ -277,23 +277,23 @@
         </div>
         <div class="column2">
           <div class="row">
-            <span style="margin-bottom: 5px" id="categorylable">Category</span>
-            <select id="category" name="category">
-              <option value="category1">Category 1</option>
-              <option value="category2">Category 2</option>
-              <option value="category3">Category 3</option>
+            <span style="margin-bottom: 5px" id="Partlable">Part</span>
+            <select id="Part">
+              <option partid="Part1" partnumber="SN">Part 1</option>
+              <option partid="Part2">Part 2</option>
+              <option partid="Part3">Part 3</option>
             </select>
             <span
               style="margin-top: 10px; margin-bottom: 5px"
               id="assignedlable"
               >Assignee</span
             >
-            <select id="assigned" name="category" aria-placeholder="assigned">
-              <option value="category1">Zebadiah</option>
-              <option value="category2">Tom</option>
-              <option value="category3">Kiana</option>
-              <option value="category4">Sebastion</option>
-              <option value="category5">N/A</option>
+            <select id="asignusers" aria-placeholder="assigned">
+              <option value="Part1">Zebadiah</option>
+              <option value="Part2">Tom</option>
+              <option value="Part3">Kiana</option>
+              <option value="Part4">Sebastion</option>
+              <option value="Part5">N/A</option>
             </select>
           </div>
           <div class="row">
@@ -311,7 +311,7 @@
           <tr>
             <th class="title">Title</th>
             <th>Description</th>
-            <th>Category</th>
+            <th>Part</th>
             <th class="assigned">Assigned</th>
             <th class="buttons"></th>
             <th class="buttons"></th>
@@ -331,7 +331,7 @@
                 </p>
               </div>
             </td>
-            <td>Category</td>
+            <td>Part</td>
             <td class="assigned">Assignee</td>
             <td class="buttons">
               <button class="button-style" onclick="editFunction()">
@@ -351,15 +351,16 @@
     </div>
 
     <script type="text/javascript" charset="utf-8">
+      // Function to submit a task on submit button click event to the server.
       function submitReport() {
-        fetch("https://jsonplaceholder.typicode.com/todos", {
+        fetch("/add", {
           method: "POST",
           body: JSON.stringify({
             title: document.getElementById("title").innerText,
-            Description: document.getElementById("description").innerText,
-            Category: document.getElementById("category").innerText,
+            description: document.getElementById("description").innerText,
+            Part: document.getElementById("Part").innerText,
             Assigned: document.getElementById("assigned").innerText,
-            value: document.getElementById("value").value,
+            id: document.getElementById("task").taskid,
           }),
           headers: {
             "Content-type": "application/json; charset=UTF-8",
@@ -367,6 +368,252 @@
         });
       }
 
+      // TODO: complete functionality
+      function editFunction() {
+        // Add's edit functionality
+        alert("Edit clicked!");
+      }
+
+      // AJAX call to server to delete a task gien the id of the task
+      // TODO: Test Functionality
+      function deleteFunction() {
+        fetch("/delete", {
+          method: "DELETE",
+          body: JSON.stringify({
+            id: document.getElementById("task").dataid,
+          }),
+          headers: {
+            "Content-type": "application/json; charset=UTF-8",
+          },
+        });
+      }
+
+      //AJAX call to server with search string as input
+      // TODO: test functionality
+      function taskSearch() {
+        const mytable = document.getElementById("html-data-table");
+        var input = document.getElementById("myInput");
+        input.value.toUpperCase();
+
+        fetch("https://jsonplaceholder.typicode.com/todos", {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            input: input,
+          }),
+        })
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (apiJsonData) {
+            console.log(apiJsonData);
+            renderDataInTheTable(apiJsonData);
+          });
+
+        var count = 1;
+        function renderDataInTheTable(todos) {
+          const mytable = document.getElementById("html-data-table");
+          todos.forEach((todo) => {
+            let newRow = document.createElement("tr");
+            Object.values(todo).forEach((value) => {
+              if (count == 2) {
+                let cell = document.createElement("td");
+
+                let button = document.createElement("button");
+                button.className = "accordion";
+                button.innerText = "Click to expand Description";
+                cell.appendChild(button);
+
+                let div = document.createElement("div");
+                div.className = "panel";
+
+                let paragraph = document.createElement("p");
+                paragraph.innerText = "Description";
+                div.appendChild(paragraph);
+                cell.appendChild(div);
+                newRow.appendChild(cell);
+              } /*else if (count == 7) {
+              let cell = document.createElement("td");
+              cell.value = value;
+              newRow.appendChild(cell);
+              count = 1;
+            }*/ else {
+                let cell = document.createElement("td");
+                cell.innerText = value;
+                newRow.appendChild(cell);
+              }
+              count++;
+            });
+
+            // add the edit button to the table
+            let editCell = document.createElement("td");
+            editCell.innerText = "Edit";
+            editCell.className = "button-style";
+            editCell.onclick = () => {
+              editFunction();
+            };
+            newRow.appendChild(editCell);
+
+            //add the delete button to the table
+            let deleteCell = document.createElement("td");
+            deleteCell.innerText = "Delete";
+            deleteCell.className = "button-style";
+            deleteCell.onclick = () => {
+              deleteFunction();
+            };
+            newRow.appendChild(deleteCell);
+
+            // adds the accordion dropdown functionality to the table
+            var acc = document.getElementsByClassName("accordion");
+            var i;
+
+            for (i = 0; i < acc.length; i++) {
+              acc[i].addEventListener("click", function () {
+                this.classList.toggle("active");
+                var panel = this.nextElementSibling;
+                if (panel.style.maxHeight) {
+                  panel.style.maxHeight = null;
+                } else {
+                  panel.style.maxHeight = panel.scrollHeight + "px";
+                }
+              });
+            }
+
+            mytable.appendChild(newRow);
+          });
+        }
+      }
+
+      // TODO: correct url
+      // TODO: test functionality
+      function populateParts() {
+        fetch("https://jsonplaceholder.typicode.com/todos")
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (apiJsonData) {
+            console.log(apiJsonData);
+            renderDataInDropdown(apiJsonData);
+          });
+
+        function renderDataInDropdown(data) {
+          var count = 1;
+          const mydropdown = document.getElementById("Part");
+          data.forEach((data) => {
+            let newOption = document.createElement("option");
+            Object.values(todo).forEach((value) => {
+              if (count == 1) {
+                newOption.partid = value;
+              } else if (count == 2) {
+                newOption.partnumber = value;
+              } else {
+                newOption.innerText = value;
+              }
+              count++;
+            });
+            mydropdown.appendChild(newOption);
+            count = 1;
+          });
+        }
+      }
+
+      // TODO: correct url
+      // TODO: correct test functinoality
+      function populateUsers() {
+        fetch("https://jsonplaceholder.typicode.com/todos")
+          .then(function (response) {
+            return response.json();
+          })
+          .then(function (apiJsonData) {
+            console.log(apiJsonData);
+            renderDataInDropdown(apiJsonData);
+          });
+
+        function renderDataInDropdown(data) {
+          const mydropdown = document.getElementById("asignusers");
+          data.forEach((data) => {
+            let newOption = document.createElement("option");
+            newOption.innerText = data;
+            mydropdown.appendChild(newOption);
+          });
+        }
+      }
+
+      var acc = document.getElementsByClassName("accordion");
+      var i;
+
+      //function for accordian dropdown
+      for (i = 0; i < acc.length; i++) {
+        acc[i].addEventListener("click", function () {
+          this.classList.toggle("active");
+          var panel = this.nextElementSibling;
+          if (panel.style.maxHeight) {
+            panel.style.maxHeight = null;
+          } else {
+            panel.style.maxHeight = panel.scrollHeight + "px";
+          }
+        });
+      }
+
+      //function for search bar to only work on click
+      const input = document.getElementById("myInput");
+      input.addEventListener("keyup", (event) => {
+        if (event.key === "Enter") {
+          taskSearch();
+        }
+      });
+
+      //function to implement search bar functionality (Fallback functionality)
+      /* function myFunction() {
+        // Declare variables
+        var input,
+          filter,
+          table,
+          tr,
+          title,
+          assignee,
+          Part,
+          description,
+          i,
+          titleTxtValue,
+          descriptionTxtValue,
+          PartTxtValue,
+          assigneeTxtValue;
+        input = document.getElementById("myInput");
+        filter = input.value.toUpperCase();
+        table = document.getElementById("html-data-table");
+        tr = table.getElementsByTagName("tr");
+
+        // Loop through all table rows titles, and hide those who don't match the search query
+        for (i = 0; i < tr.length; i++) {
+          title = tr[i].getElementsByTagName("td")[0];
+          description = tr[i].getElementsByTagName("td")[1];
+          Part = tr[i].getElementsByTagName("td")[2];
+          assignee = tr[i].getElementsByTagName("td")[3];
+          if (title) {
+            titleTxtValue = title.textContent || title.innerText;
+            descriptionTxtValue =
+              description.textContent || description.innerText;
+            PartTxtValue = Part.textContent || Part.innerText;
+            assigneeTxtValue = assignee.textContent || assignee.innerText;
+            if (
+              titleTxtValue.toUpperCase().indexOf(filter) > -1 ||
+              descriptionTxtValue.toUpperCase().indexOf(filter) > -1 ||
+              PartTxtValue.toUpperCase().indexOf(filter) > -1 ||
+              assigneeTxtValue.toUpperCase().indexOf(filter) > -1
+            ) {
+              tr[i].style.display = "";
+            } else {
+              tr[i].style.display = "none";
+            }
+          }
+        }
+      }*/
+    </script>
+
+    <script type="text/javascript" charset="utf-8">
       fetch("https://jsonplaceholder.typicode.com/todos")
         .then(function (response) {
           return response.json();
@@ -447,106 +694,6 @@
 
           mytable.appendChild(newRow);
         });
-      }
-    </script>
-
-    <script>
-      function editFunction() {
-        // Add's edit functionality
-        alert("Edit clicked!");
-      }
-
-      function deleteFunction() {
-        // Add's your delete functionality
-        alert("Delete clicked!");
-      }
-
-      var acc = document.getElementsByClassName("accordion");
-      var i;
-
-      //function for accordian dropdown
-      for (i = 0; i < acc.length; i++) {
-        acc[i].addEventListener("click", function () {
-          this.classList.toggle("active");
-          var panel = this.nextElementSibling;
-          if (panel.style.maxHeight) {
-            panel.style.maxHeight = null;
-          } else {
-            panel.style.maxHeight = panel.scrollHeight + "px";
-          }
-        });
-      }
-
-      //function for search bar to only work on click
-      const input = document.getElementById("myInput");
-      input.addEventListener("keyup", (event) => {
-        if (event.key === "Enter") {
-          taskSearch();
-        }
-      });
-
-      //AJAX call to server with search string as input
-      function taskSearch() {
-        fetch("https://jsonplaceholder.typicode.com/todos", {
-          method: "POST",
-          body: JSON.stringify({
-            title: document.getElementById("title").innerText,
-            Description: document.getElementById("description").innerText,
-            Category: document.getElementById("category").innerText,
-            Assigned: document.getElementById("assigned").innerText,
-            value: document.getElementById("value").value,
-          }),
-          headers: {
-            "Content-type": "application/json; charset=UTF-8",
-          },
-        });
-      }
-
-      //function to implement search bar functionality
-      function myFunction() {
-        // Declare variables
-        var input,
-          filter,
-          table,
-          tr,
-          title,
-          assignee,
-          category,
-          description,
-          i,
-          titleTxtValue,
-          descriptionTxtValue,
-          categoryTxtValue,
-          assigneeTxtValue;
-        input = document.getElementById("myInput");
-        filter = input.value.toUpperCase();
-        table = document.getElementById("html-data-table");
-        tr = table.getElementsByTagName("tr");
-
-        // Loop through all table rows titles, and hide those who don't match the search query
-        for (i = 0; i < tr.length; i++) {
-          title = tr[i].getElementsByTagName("td")[0];
-          description = tr[i].getElementsByTagName("td")[1];
-          category = tr[i].getElementsByTagName("td")[2];
-          assignee = tr[i].getElementsByTagName("td")[3];
-          if (title) {
-            titleTxtValue = title.textContent || title.innerText;
-            descriptionTxtValue =
-              description.textContent || description.innerText;
-            categoryTxtValue = category.textContent || category.innerText;
-            assigneeTxtValue = assignee.textContent || assignee.innerText;
-            if (
-              titleTxtValue.toUpperCase().indexOf(filter) > -1 ||
-              descriptionTxtValue.toUpperCase().indexOf(filter) > -1 ||
-              categoryTxtValue.toUpperCase().indexOf(filter) > -1 ||
-              assigneeTxtValue.toUpperCase().indexOf(filter) > -1
-            ) {
-              tr[i].style.display = "";
-            } else {
-              tr[i].style.display = "none";
-            }
-          }
-        }
       }
     </script>
   </body>
