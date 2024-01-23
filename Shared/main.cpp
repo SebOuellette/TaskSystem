@@ -11,8 +11,6 @@
 #include <ctime>
 #include "headers/crow_all.h"
 
-#define PART_COUNT 5
-
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
@@ -29,27 +27,31 @@ int main()
 
 
 	// List of parts in the system (example)
-	Part parts[PART_COUNT];
-	parts[0] = newPart(1, "Part1", "SN-29494");
-	parts[1] = newPart(2, "Part2", "SN-4377593");
-	parts[2] = newPart(3, "Part3", "SN-6947493");
-	parts[3] = newPart(4, "Part4", "SN-5857374");
-	parts[4] = newPart(5, "Part5", "SN-6474757");
+	// Part parts[PART_COUNT];
+	// parts[0] = newPart(1, "Part1", "SN-29494");
+	// parts[1] = newPart(2, "Part2", "SN-4377593");
+	// parts[2] = newPart(3, "Part3", "SN-6947493");
+	// parts[3] = newPart(4, "Part4", "SN-5857374");
+	// parts[4] = newPart(5, "Part5", "SN-6474757");
+	
 	
 
 	CROW_ROUTE(app, "/") // Index page
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
-        ([&db, &parts](const crow::request& req, crow::response& res){
+        ([&db](const crow::request& req, crow::response& res){
 			// Redirect to the cart page
             res.code = 200;
 
 			std::string home = loadFile(res, "", "home.html");
+
+			// Get a current list of parts at the time of request
+			std::vector<Part> parts = db.getParts();
 			
 			// // Add all parts to the part dropdown
-			for (int i=0;i<PART_COUNT;i++) {
+			for (int i=0;i<parts.size();i++) {
 				std::stringstream result;
 				// Build new option, append template at the end to allow for another loop
-				result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << "</option>" << PART_TEMPLATE;
+				result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << " | " << parts[i].serialNumber << "</option>" << PART_TEMPLATE;
 				// replace the template with our new html element
 				home = replaceTemplates(home, PART_TEMPLATE, result.str());
 			}

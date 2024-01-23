@@ -120,6 +120,45 @@ public:
 		std::cout << "Running insert query: " << insertQuery.str() << std::endl;
 		return this->run(insertQuery.str(), NULL);
 	}
+	// Return a list of all parts in the system to be used
+	std::vector<Part> getParts() {
+		std::vector<Part> parts;
+
+		stringstream selectQuery;
+		selectQuery << "SELECT * FROM Parts LIMIT " << PART_DISPLAY_LIMIT << ";";
+
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+			std::vector<Part>* parts = (std::vector<Part>*)data;
+			Part foundPart;
+
+			for(int row = 0; row < argc; row++)
+			{
+				
+				
+				if (strcmp(colNames[row], "id") == 0) {
+					foundPart.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundPart.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundPart.serialNumber, argv[row], length);
+				}
+
+				
+			}
+
+			parts->push_back(foundPart);
+
+			return 0;
+		}, (void*)&parts);
+
+		return parts;
+
+	}
 	//get part names from id
 	Part getPart(Task& t)
 	{

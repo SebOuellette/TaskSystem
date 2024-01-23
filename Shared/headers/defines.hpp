@@ -14,6 +14,7 @@
 // Part Defines
 #define PART_NAME_LENGTH 25
 #define PART_SERIAL_LENGTH 50
+#define PART_DISPLAY_LIMIT 500
 
 //User Defines
 #define USER_NAME_LENGTH 25
