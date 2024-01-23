@@ -17,7 +17,7 @@ typedef struct _Task {
 
 	std::chrono::system_clock::time_point timeAdded;
 	//0: id, 1: title, 2: description, 3: partid, 4: userid
-	enum COLUMNS {IDCOL, TITLE, DESCRIPTION, PARTID, USERID};
+	enum COLUMNS {IDCOL = 0b1, TITLE = 0b10, DESCRIPTION = 0b100, PARTID = 0b1000, USERID = 0b10000};
 
 	_Task() : timeAdded(std::chrono::system_clock::now()) {}
 

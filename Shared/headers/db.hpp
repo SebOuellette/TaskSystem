@@ -24,9 +24,25 @@
 
 using namespace std;
 
+typedef struct _SEARCH_TERM {
+	Task::COLUMNS col;
+	std::string key;
+} SearchTerm;
+
+typedef enum _SEARCH_TYPE {
+	S_AND, S_OR
+} SearchType;
+
+typedef struct _SEARCH {
+	std::vector<SearchTerm> searches;
+	SearchType type = S_AND;
+} Search;
+
+
 class TaskDb {
 private:
 	sqlite3* _db;
+
 
 public:
 	TaskDb() {
@@ -120,8 +136,10 @@ public:
 		std::cout << "Running insert query: " << insertQuery.str() << std::endl;
 		return this->run(insertQuery.str(), NULL);
 	}
-	// Return a list of all parts in the system to be used
+	// Return a list of all parts in the system
+	/// Used when displaying all parts in the home.html dropdown
 	std::vector<Part> getParts() {
+		// Prepare list of parts
 		std::vector<Part> parts;
 
 		stringstream selectQuery;
@@ -129,13 +147,13 @@ public:
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+			// Local pointer to parts list
 			std::vector<Part>* parts = (std::vector<Part>*)data;
 			Part foundPart;
 
+			// Parsing for various variables within the part struct
 			for(int row = 0; row < argc; row++)
 			{
-				
-				
 				if (strcmp(colNames[row], "id") == 0) {
 					foundPart.id = stoi(argv[row]);
 				}
@@ -147,17 +165,16 @@ public:
 					int length = strlen(argv[row]) + 1;
 					strncpy(foundPart.serialNumber, argv[row], length);
 				}
-
-				
 			}
 
+			// Part is constructed, push it to the list
 			parts->push_back(foundPart);
 
 			return 0;
 		}, (void*)&parts);
 
+		// Return the final list
 		return parts;
-
 	}
 	//get part names from id
 	Part getPart(Task& t)
@@ -226,38 +243,51 @@ public:
 	}
 
 	//get tasks by filter
-	vector<Task> getFilteredTasks(string key, Task::COLUMNS column)
+	vector<Task> getFilteredTasks(Search search)
 	{
 		string TaskTable = "Tasks";
 		stringstream selectQuery;
-		string colName;
+		std::vector<string> searchCols;
 
-		switch(column)
-		{
-		case 0:
-			colName = "id";
-			break;
-		case 1:
-			colName = "title";
-			break;
-		case 2:
-			colName = "description";
-			break;
-		case 3:
-			colName = "partid";
-			break;
-		default: 
-			colName = "title";
+		vector<Task> tasks; 
+
+		// Build the select query
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE ";
+		for (int i=0;i<search.searches.size();i++) {
+			if (i != 0) {
+				selectQuery << ((search.type == S_AND) ? " AND " : " OR ");
+			}
+
+			std::string col = "";
+			switch(search.searches[i].col) {
+				case Task::IDCOL:
+					col = "id";
+					break;
+				case Task::TITLE:
+					col = "title";
+					break;
+				case Task::DESCRIPTION:
+					col = "description";
+					break;
+				case Task::PARTID:
+					col = "partid";
+					break;
+				case Task::USERID:
+					col = "userid";
+					break;
+				default:
+					col = "title";
+					break;
+			}
+
+			selectQuery << col << " LIKE '%" << search.searches[i].key << "%'";
 		}
 
-		vector<Task> tasks;
-
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "'%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			vector<Task>* tasks = (vector<Task>*)data;
-			cout << "Entered getFilteredTasks lambda, ";
+			//cout << "Entered getFilteredTasks lambda, ";
 			Task fromDbQuery;
 
 			for(int row = 0; row < argc; row++)
@@ -288,13 +318,13 @@ public:
 			tasks->push_back(fromDbQuery);
 			return 0;
 		}, (void*)&tasks);
-		cout << "Found " << tasks.size() << " matches, ";
-		cout << "Getting part data, ";
-		for(Task & task : tasks)
-		{
-			task.consumedPart = this->getPart(task);
-			task.user = this->getUser(task.user.id);
-		}
+		// cout << "Found " << tasks.size() << " matches, ";
+		// cout << "Getting part data, ";
+		// for(Task & task : tasks)
+		// {
+		// 	task.consumedPart = this->getPart(task);
+		// 	task.user = this->getUser(task.user.id);
+		// }
 		return tasks;
 	}
 	//Update task

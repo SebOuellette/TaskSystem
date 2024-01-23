@@ -25,17 +25,6 @@ int main()
 	// Create and initialize the database
 	TaskDb db;
 
-
-	// List of parts in the system (example)
-	// Part parts[PART_COUNT];
-	// parts[0] = newPart(1, "Part1", "SN-29494");
-	// parts[1] = newPart(2, "Part2", "SN-4377593");
-	// parts[2] = newPart(3, "Part3", "SN-6947493");
-	// parts[3] = newPart(4, "Part4", "SN-5857374");
-	// parts[4] = newPart(5, "Part5", "SN-6474757");
-	
-	
-
 	CROW_ROUTE(app, "/") // Index page
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
         ([&db](const crow::request& req, crow::response& res){
@@ -97,10 +86,6 @@ int main()
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::POST, crow::HTTPMethod::PUT)
         ([&db](const crow::request& req, crow::response& res){
 			if (req.method == crow::HTTPMethod::POST) {
-				// Check if task exists
-				// If it does, return 409
-				// Otherwise continue
-
 				// build JSON object from body
 				const crow::json::rvalue& parsed = crow::json::load(req.body);
 				// Create task object from JSON data
@@ -122,15 +107,41 @@ int main()
 				memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
 
 
-				// Debug print everything
-				std::cout << "  Part:" << std::endl << "Part ID:" << p->id << std::endl << "Part Name: " << p->name << std::endl <<
-				"  User:" << std::endl << "User ID: " << u->id << std::endl << "User Name:" << u->name << std::endl << 
-				"  Task: " << std::endl << "Task Title: " << t.title << std::endl << "Description: " << t.description << std::endl;
+				// Check if task exists
+				// Construct a search with two search criteria
+				//  Users can only have one task per part, so check if a task exists with this user and the part we want (match both userid and partid)
+				Search s;
+				s.type = S_AND; // Ensure BOTH/ALL search conditions are true
+				s.searches.push_back({.col = Task::USERID, .key = std::to_string(u->id)});
+				s.searches.push_back({.col = Task::PARTID, .key = std::to_string(p->id)});
+				
+				std::vector<Task> tasks = db.getFilteredTasks(s); // Search and return results
+				bool exists = tasks.size() > 0;
+				
+				// Return error page, temporary basic string for now
+				if (exists) {
+					res.code = 409;
+					std::ostringstream msg;
+					msg << "Error 409 - Conflict. Task for user '" << u->name << "' for part '[" << p->id << "] " << p->name << "' Already exists. Duplicates cannot exist." << std::endl;
+					res.write(msg.str());
+					res.end();
+					return;
+				}
+
+				// Does not exist, add it
+				db.insertTask(t);
+				
+				res.code = 200;
+				res.end();
 			} else if (req.method == crow::HTTPMethod::PUT) {
 				// Check if task exists
 				// if not, return "not found"
 
 				// Replace existing task with provided data
+
+				// std::cout << "  Part:" << std::endl << "Part ID:" << p->id << std::endl << "Part Name: " << p->name << std::endl <<
+				// "  User:" << std::endl << "User ID: " << u->id << std::endl << "User Name:" << u->name << std::endl << 
+				// "  Task: " << std::endl << "Task Title: " << t.title << std::endl << "Description: " << t.description << std::endl;
 
 
 			}
