@@ -120,6 +120,78 @@ public:
 		std::cout << "Running insert query: " << insertQuery.str() << std::endl;
 		return this->run(insertQuery.str(), NULL);
 	}
+	bool checkExists(Task& t)
+	{
+		string TaskTable = "Tasks";
+		Task foundTask;
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		bool exists = false;
+
+		if(t.id != 0)
+		{
+			exists = this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) 
+								{
+									Task* foundTask = (Task*)data;
+									if(!foundTask.id)
+										return 1;
+
+									return 0;
+								});
+		}
+		return exists;
+	}
+	//get part names from id
+	Task getTask(Task& t)
+	{
+		Task foundTask;
+		string TaskTable = "Tasks";
+
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		
+		if (!t.consumedPart.id)
+			return Part();
+
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			Task foundTask;
+
+			for(int row = 0; row < argc; row++)
+			{
+				
+				if (strcmp(colNames[row], "id") == 0) {
+					foundTask.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "title") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask.title, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "description") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask.description, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "datecreated") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask.datecreated, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partid") == 0) {
+					foundTask.consumedPart.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "userid") == 0) {
+					foundTask.user.id = stoi(argv[row]);
+				}
+			}
+
+			return 0;
+		}, (void*)&foundTask);
+
+		task.consumedPart = this->getPart(task);
+		task.user = this->getUser(task.user.id);
+		return foundTask;
+		
+	}
 	//get part names from id
 	Part getPart(Task& t)
 	{
