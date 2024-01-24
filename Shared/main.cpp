@@ -72,7 +72,15 @@ int main()
 
             res.end();
         });
+	
+	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
+	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
+        ([&db](const crow::request& req, crow::response& res, std::string key){
+		
 
+		
+			
+		}
 
 	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
