@@ -236,6 +236,49 @@ public:
 		
 	}
 
+		//get part names from id
+	Part getAllParts(Task& t)
+	{
+		vector<Part> allParts;
+		string PartTable = "Parts";
+
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
+		
+		if (!t.consumedPart.id)
+			return Part();
+
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+		
+			vector<Part>* allParts = (vector<Part>*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				
+				Part entry;
+
+				if (strcmp(colNames[row], "id") == 0) {
+					entry.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.serialNumber, argv[row], length);
+				}
+				allParts.push_back(entry);
+			}
+
+			return 0;
+		}, (void*)&allParts);
+
+		return foundPart;
+		
+	}
+
 	User getUser(int id)
 	{
 		User foundUser;
@@ -263,8 +306,41 @@ public:
 		return foundUser;
 	}
 
+	vector<User> getAllUsers(int id)
+	{
+		vector<User> foundUsers;
+		string UsersTable = "Users";
+		stringstream selectQuery;
+
+		selectQuery << "SELECT * FROM "<< UsersTable;
+
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			vector<User>* foundUsers = (User*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				User entry;
+				if (strcmp(colNames[row], "id") == 0) {
+					entry.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.name, argv[row], length);
+				}
+				foundUsers->push_back(entry);
+			}
+			return 0;
+		}, (void*)&foundUsers);
+		return foundUsers;
+	}
+
+
+
+
+
 	//get tasks by filter
-	vector<Task> getFilteredTasks(string key, Task::COLUMNS column)
+	vector<Task> getFilteredTasks(string& key, Task::COLUMNS column)
 	{
 		string TaskTable = "Tasks";
 		stringstream selectQuery;

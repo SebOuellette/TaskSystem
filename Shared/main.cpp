@@ -73,19 +73,30 @@ int main()
             res.end();
         });
 	
-	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
+	CROW_ROUTE(app, "/search") // Get a current task list by key in json body
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
-        ([&db](const crow::request& req, crow::response& res, std::string key){
+        ([&db](const crow::request& req){
 		
+			json::rvalue jsonResponse;
+			const crow::json::rvalue& parsed = crow::json::load(reqBody);
+			vector<Task> filteredTasks;
+			vector<string> keys;
 
-		
-			
+        	for(auto& j: parsed["key"].array_items()) {
+            	keys.push_back(j.dump());
+				vector<Task> returnedTasks =  db.getFilteredTasks(keyValue);
+				filteredTasks.insert(filteredTasks.end(), returnedTasks.begin(), returnedTasks.end());
+        	}
+
+			jsonResponse = std::move(filteredTasks);
+			return crow::response(std::move(jsonResponse));
 		}
 
-	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
+	CROW_ROUTE(app, "/edit") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
-        ([&db](const crow::request& req, crow::response& res, std::string id){
+        ([&db](const crow::request& req, crow::response& res){
 			
+
 			Task submitted = buildTaskFromJson(req.body);
 			res->code = 200;
 
