@@ -17,6 +17,8 @@
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
 bool isAuthorized(ID userID, const crow::request& req);
+Task buildTaskFromJson(string reqBody);
+crow::json::wvalue buildJsonFromTask(Task& task)
 
 // Main Function
 int main()
@@ -77,22 +79,27 @@ int main()
         ([&db](const crow::request& req, crow::response& res, std::string id){
 			
 			Task submitted = buildTaskFromJson(req.body);
+			res->code = 200;
 
 			if (req.method == crow::HTTPMethod::GET) {
 				// read database
-				Task requested = db.getTask(submitted);
-				
+				Task existingTask = db.getTask(submitted);
 				//format a response
+				crow::json::wvalue jsonTask = buildJsonFromTask(existingTask);
+				res->write(jsonTask);
 
-				
-				// Assigned
-				// Category
 			} else if (req.method == crow::HTTPMethod::PATCH) {
 				// Update only changed elements
 				bool exists = db.checkExists(submitted);
 
 				if(exists)
-					db.updateTask(submitted);
+				{
+					bool updatStatus = db.updateTask(submitted);
+					if(!updatStatus)
+						res->code = 409;
+				}
+				else
+					res->code = 409;		
 			}
 
 			res.end();
@@ -167,6 +174,21 @@ int main()
 	return 1;
 }
 
+crow::json::wvalue buildJsonFromTask(Task& task)
+{
+	crow::json::wvalue jsonTask;
+	jsonTask["taskid"] = json::value::int(task.id);
+	jsonTask["title"] = json::value::string(task.title);
+	jsonTask["description"] = json::value::string(task.description);
+	jsonTask["datecreated"] = json::value::string(task.datecreated);
+	jsonTask["partid"] = json::value::int(task.consumedPart.id);
+	jsonTask["part"] = json::value::string(task.consumedPart.name);
+	jsonTask["assigned"] = json::value::string(task.user.id);
+	jsonTask["assignedName"] = json::value::string(task.user.name);
+
+	return jsonTask;
+}
+
 Task buildTaskFromJson(string reqBody)
 {
 				
@@ -180,7 +202,7 @@ Task buildTaskFromJson(string reqBody)
 	// Parts
 	try{
 		//part id
-		p->id = parsed["id"].i(); //atoi(id.c_str());
+		p->id = parsed["partid"].i(); //atoi(id.c_str());
 	}
 	catch(...)
 	{
@@ -220,7 +242,7 @@ Task buildTaskFromJson(string reqBody)
 	try
 	{
 		//task id
-		t.id = parsed["id"].i();
+		t.id = parsed["taskid"].i();
 	}
 	catch(...)
 	{
