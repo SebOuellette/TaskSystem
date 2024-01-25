@@ -15,6 +15,8 @@
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
 bool isAuthorized(ID userID, const crow::request& req);
+Task buildTaskFromJson(string reqBody);
+crow::json::wvalue buildJsonFromTask(Task& task)
 
 // Main Function
 int main()
@@ -56,27 +58,47 @@ int main()
         ([&db](const crow::request& req, crow::response& res){
 			// Redirect to the cart page
             res.code = 200;
-		
-			      res.write(loadFile(res, "", "help.html"));
+				
+			    res.write(loadFile(res, "", "help.html"));
 
             res.end();
         });
+	
+	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
+	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
+        ([&db](const crow::request& req, crow::response& res, std::string key){
+		
 
+		
+			
+		}
 
 	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
         ([&db](const crow::request& req, crow::response& res, std::string id){
+			
+			Task submitted = buildTaskFromJson(req.body);
+			res->code = 200;
 
 			if (req.method == crow::HTTPMethod::GET) {
 				// read database
-				
-				
-				// Assigned
-				// Category
+				Task existingTask = db.getTask(submitted);
+				//format a response
+				crow::json::wvalue jsonTask = buildJsonFromTask(existingTask);
+				res->write(jsonTask);
+
 			} else if (req.method == crow::HTTPMethod::PATCH) {
 				// Update only changed elements
+				bool exists = db.checkExists(submitted);
 
-
+				if(exists)
+				{
+					bool updatStatus = db.updateTask(submitted);
+					if(!updatStatus)
+						res->code = 409;
+				}
+				else
+					res->code = 409;		
 			}
 
 			res.end();
@@ -85,39 +107,26 @@ int main()
 	CROW_ROUTE(app, "/add") // Upload a new task
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::POST, crow::HTTPMethod::PUT)
         ([&db](const crow::request& req, crow::response& res){
+			// Create task object from JSON data
+			Task submitted = buildTaskFromJson(req.body);
+
+			// Check if the task exsits in the database
+			// Construct a search with two search criteria
+			//  Users can only have one task per part, so check if a task exists with this user and the part we want (match both userid and partid)
+			Search s;
+			s.type = S_AND; // Ensure BOTH/ALL search conditions are true
+			s.searches.push_back({.col = Task::USERID, .key = std::to_string(u->id)});
+			s.searches.push_back({.col = Task::PARTID, .key = std::to_string(p->id)});
+			
+			// Perform a database query to check if it exists
+			std::vector<Task> tasks = db.getFilteredTasks(s);
+			bool exists = tasks.size() > 0;
+
+			// Perform task based on REST method
 			if (req.method == crow::HTTPMethod::POST) {
-				// build JSON object from body
-				const crow::json::rvalue& parsed = crow::json::load(req.body);
-				// Create task object from JSON data
-				Task t;
-				Part* p = &t.consumedPart;
-				User* u = &t.user;
-
-				///    Convert JSON data to raw data for Task struct
-				// Parts
-				p->id = parsed["id"].i(); //atoi(id.c_str());
-				memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
-				
-				// User
-				u->id = parsed["assigned"].i();
-				memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
-
-				// Task
-				memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
-				memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
-
-
-				// Check if task exists
-				// Construct a search with two search criteria
-				//  Users can only have one task per part, so check if a task exists with this user and the part we want (match both userid and partid)
-				Search s;
-				s.type = S_AND; // Ensure BOTH/ALL search conditions are true
-				s.searches.push_back({.col = Task::USERID, .key = std::to_string(u->id)});
-				s.searches.push_back({.col = Task::PARTID, .key = std::to_string(p->id)});
-				
-				std::vector<Task> tasks = db.getFilteredTasks(s); // Search and return results
-				bool exists = tasks.size() > 0;
-				
+				//
+				//	SUBMIT NEW RECORD (ONLY IF DOES NOT EXIST ALREADY)
+				//
 				// Return error page, temporary basic string for now
 				if (exists) {
 					res.code = 409;
@@ -141,46 +150,15 @@ int main()
 				res.code = 200;
 				res.end();
 			} else if (req.method == crow::HTTPMethod::PUT) {
-				// Check if task exists
-				// if not, return "not found"
-				// build JSON object from body
-				const crow::json::rvalue& parsed = crow::json::load(req.body);
-				// Create task object from JSON data
-				Task t;
-				Part* p = &t.consumedPart;
-				User* u = &t.user;
-
-				///    Convert JSON data to raw data for Task struct
-				// Parts
-				p->id = parsed["id"].i(); //atoi(id.c_str());
-				memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
-				
-				// User
-				u->id = parsed["assigned"].i();
-				memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
-
-				// Task
-				memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
-				memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
-
-
-				// Check if task exists
-				// Construct a search with two search criteria
-				//  Users can only have one task per part, so check if a task exists with this user and the part we want (match both userid and partid)
-				Search s;
-				s.type = S_AND; // Ensure BOTH/ALL search conditions are true
-				s.searches.push_back({.col = Task::USERID, .key = std::to_string(u->id)});
-				s.searches.push_back({.col = Task::PARTID, .key = std::to_string(p->id)});
-				
-				std::vector<Task> tasks = db.getFilteredTasks(s); // Search and return results
-				bool exists = tasks.size() > 0;
-				
+				//
+				// UPDATE EXISTING RECORD (ONLY IF EXISTS)
+				//
 				// Return error page, temporary basic string for now
 				// Does not exist, so we can't edit it
 				if (!exists) {
 					res.code = 404;
 					std::ostringstream msg;
-					msg << "Error 404 - Not Found. Task for user '" << u->name << "' for part '[" << p->id << "] " << p->name << "' Must first exist before it can be edited. It does not exist." << std::endl;
+					msg << "Error 404 - Not Found. Task for user '" << submitted.user.name << "' for part '[" << submitted.consumedPart.id << "] " << submitted.consumedPart.name << "' Must first exist before it can be edited. It does not exist." << std::endl;
 					res.write(msg.str());
 					res.end();
 					return;
@@ -241,6 +219,113 @@ int main()
 	return 1;
 }
 
+crow::json::wvalue buildJsonFromTask(Task& task)
+{
+	crow::json::wvalue jsonTask;
+	jsonTask["taskid"] = json::value::int(task.id);
+	jsonTask["title"] = json::value::string(task.title);
+	jsonTask["description"] = json::value::string(task.description);
+	jsonTask["datecreated"] = json::value::string(task.datecreated);
+	jsonTask["partid"] = json::value::int(task.consumedPart.id);
+	jsonTask["part"] = json::value::string(task.consumedPart.name);
+	jsonTask["assigned"] = json::value::string(task.user.id);
+	jsonTask["assignedName"] = json::value::string(task.user.name);
+
+	return jsonTask;
+}
+
+Task buildTaskFromJson(string reqBody)
+{
+				
+	Task t;
+	const crow::json::rvalue& parsed = crow::json::load(reqBody);
+	
+	Part* p = &t.consumedPart;
+	User* u = &t.user;
+
+	///    Convert JSON data to raw data for Task struct
+	// Parts
+	try{
+		//part id
+		p->id = parsed["partid"].i(); //atoi(id.c_str());
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find part id in req body\n";
+	}
+	
+	try
+	{
+		//part name
+		memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"couldnt find part name in req body\n";
+	}
+	
+	try
+	{
+		//User Id
+		u->id = parsed["assigned"].i();
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find user id in req body\n";
+	}
+
+	try
+	{
+		// User name
+		memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find user name in req body\n";
+	}
+	
+	try
+	{
+		//task id
+		t.id = parsed["taskid"].i();
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find task id in req body\n";
+	}
+	try
+	{
+		// Task title
+		memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find task title in req body\n";
+	}
+
+	try
+	{
+		// Task Descriptoin
+		memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find task description in req body\n";
+	}
+
+
+
+
+	
+
+
+
+
+
+	
+
+	return t;
+}
 
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name) {
