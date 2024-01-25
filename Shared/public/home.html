@@ -331,8 +331,9 @@
         fetch(`${window.location.href}add`, {
           method: "POST",
           body: JSON.stringify({
-            id: document.getElementById("category").value, // Read the value of the selected element (works)
+            //id: document.getElementById("category").value, // Read the value of the selected element (works)
             part: document.getElementById("category").options[document.getElementById("category").options.selectedIndex].innerText,
+            partid: document.getElementById("category").value,
             title: document.getElementById("title").value,
             description: document.getElementById("description").value,
             assigned: document.getElementById("assigned").value,

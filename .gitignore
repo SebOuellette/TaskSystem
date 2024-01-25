@@ -1,5 +1,6 @@
 # Prerequisites
 *.d
+*.db
 
 # Specific for this project
 *.tar

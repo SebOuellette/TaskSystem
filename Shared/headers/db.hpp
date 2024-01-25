@@ -182,25 +182,33 @@ public:
 	{
 		string TaskTable = "Tasks";
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		selectQuery << "SELECT 1 FROM "<< TaskTable << " WHERE ";
+		if (t.id == -1) {
+			// Sometimes, the id is unknown (when adding a new record)
+			// In this case, records are identified using userid and partid. 
+			 // In an event where the task iD is unknown, the user must know the unique combination of userid and partid. This is used when adding a new task, for example
+			selectQuery <<"userid == " << to_string(t.user.id) << " AND partid == " << to_string(t.consumedPart.id);
+		} else {
+			// When we know the task ID, we can simply query for ID, saving performance
+			selectQuery << "id == " << std::to_string(t.id);
+		}
+
 		bool exists = false;
 
 		if(t.id != 0)
 		{
-			exists = this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) 
-								{
-									int foundTask;
+			// The return type of DB::run is not set within the lambda, that's set within the actual run function. The return value of the lambda is the status code.
+			// To get data from the lambda, you must pass a pointer to a variable as the last argument, and cast it to a void pointer like so.
+			this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) 
+				{
+					// Read exists from the passed argument
+					bool* exists = (bool*)data;
 
-									for(int row = 0; row < argc; row++)
-									{
-										if (strcmp(colNames[row], "id") == 0)
-											foundTask = stoi(argv[row]);
-									}
-									if(!foundTask)
-										return 1;
+					// If we found results, true, if not, false
+					*exists = argc > 0;
 
-									return 0;
-								});
+					return 0;
+				}, (void*)&exists);
 		}
 		return exists;
 	}
@@ -250,9 +258,15 @@ public:
 			return 0;
 		}, (void*)&foundTask);
 
-		task.consumedPart = this->getPart(task);
-		task.user = this->getUser(task.user.id);
-		return foundTask;
+		if(foundTask.id)
+		{
+			cout << "Retrieved a taskId > 0, ";
+			foundTask.consumedPart = this->getPart(foundTask);
+			foundTask.user = this->getUser(foundTask.user.id);
+			return foundTask;
+		}
+		
+		return Task();
 		
 	}
 	//get part names from id
@@ -294,6 +308,49 @@ public:
 		
 	}
 
+		//get part names from id
+	vector<Part> getAllParts(Task& t)
+	{
+		vector<Part> allParts;
+		string PartTable = "Parts";
+
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
+		
+		if (!t.consumedPart.id)
+			return vector<Part>();
+
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+		
+			vector<Part>* allParts = (vector<Part>*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				
+				Part entry;
+
+				if (strcmp(colNames[row], "id") == 0) {
+					entry.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.serialNumber, argv[row], length);
+				}
+				allParts->push_back(entry);
+			}
+
+			return 0;
+		}, (void*)&allParts);
+
+		return allParts;
+		
+	}
+
 	User getUser(int id)
 	{
 		User foundUser;
@@ -321,52 +378,51 @@ public:
 		return foundUser;
 	}
 
+	vector<User> getAllUsers(int id)
+	{
+		vector<User> foundUsers;
+		string UsersTable = "Users";
+		stringstream selectQuery;
+
+		selectQuery << "SELECT * FROM "<< UsersTable;
+
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			vector<User>* foundUsers = (vector<User>*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				User entry;
+				if (strcmp(colNames[row], "id") == 0) {
+					entry.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.name, argv[row], length);
+				}
+				foundUsers->push_back(entry);
+			}
+			return 0;
+		}, (void*)&foundUsers);
+		return foundUsers;
+	}
+
 	//get tasks by filter
-	vector<Task> getFilteredTasks(Search search)
+	vector<Task> getFilteredTasks(string& key)
 	{
 		string TaskTable = "Tasks";
 		stringstream selectQuery;
-		std::vector<string> searchCols;
+		string colName;
 
-		vector<Task> tasks; 
-
-		// Build the select query
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE ";
-		for (int i=0;i<search.searches.size();i++) {
-			if (i != 0) {
-				selectQuery << ((search.type == S_AND) ? " AND " : " OR ");
-			}
-
-			std::string col = "";
-			switch(search.searches[i].col) {
-				case Task::IDCOL:
-					col = "id";
-					break;
-				case Task::TITLE:
-					col = "title";
-					break;
-				case Task::DESCRIPTION:
-					col = "description";
-					break;
-				case Task::PARTID:
-					col = "partid";
-					break;
-				case Task::USERID:
-					col = "userid";
-					break;
-				default:
-					col = "title";
-					break;
-			}
-
-			selectQuery << col << " LIKE '%" << search.searches[i].key << "%'";
-		}
-
+		vector<Task> tasks;
+		cout << "searching for key: " << key << ", ";
+		//SELECT ALL DISTINCT 
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			vector<Task>* tasks = (vector<Task>*)data;
-			//cout << "Entered getFilteredTasks lambda, ";
+			cout << "Entered getFilteredTasks lambda, ";
 			Task fromDbQuery;
 
 			for(int row = 0; row < argc; row++)
@@ -397,13 +453,18 @@ public:
 			tasks->push_back(fromDbQuery);
 			return 0;
 		}, (void*)&tasks);
-		// cout << "Found " << tasks.size() << " matches, ";
-		// cout << "Getting part data, ";
-		// for(Task & task : tasks)
-		// {
-		// 	task.consumedPart = this->getPart(task);
-		// 	task.user = this->getUser(task.user.id);
-		// }
+
+		cout << "Found " << tasks.size() << " matches, ";
+		
+		if(tasks.size() > 0)
+		{
+			cout << "Getting part data, ";
+			for(Task & task : tasks)
+			{
+				task.consumedPart = this->getPart(task);
+				task.user = this->getUser(task.user.id);
+			}
+		}
 		return tasks;
 	}
 	//Update task
