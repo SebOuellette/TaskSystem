@@ -17,6 +17,8 @@
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
 bool isAuthorized(ID userID, const crow::request& req);
+Task buildTaskFromJson(string reqBody);
+crow::json::wvalue buildJsonFromTask(Task& task);
 
 // Main Function
 int main()
@@ -65,29 +67,69 @@ int main()
         ([&db](const crow::request& req, crow::response& res){
 			// Redirect to the cart page
             res.code = 200;
-		
-			      res.write(loadFile(res, "", "help.html"));
+				
+			    res.write(loadFile(res, "", "help.html"));
 
             res.end();
         });
+	
+	CROW_ROUTE(app, "/search") // Get a current task list by key in json body
+	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
+        ([&db](const crow::request& req, crow::response& res){
+		
+			crow::json::wvalue jsonResponse;
+			const crow::json::rvalue& parsed = crow::json::load(req.body);
+			vector<Task> filteredTasks;
+			crow::json::wvalue jsonKey = parsed["key"];
+			string key = jsonKey.dump();
 
+			key = key.substr(1, key.size() - 2);
+        	
+			filteredTasks =  db.getFilteredTasks(key);
 
-	CROW_ROUTE(app, "/edit/<string>") // Get a current task by id
+			vector<crow::json::wvalue> jsonFilteredTasks;
+
+			for(int i = 0; i < filteredTasks.size(); i++)
+			{
+				crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
+				jsonFilteredTasks.push_back(jsonTask);
+			}
+			cout << "writing response, ";
+			jsonResponse = std::move(jsonFilteredTasks);
+			res.write(jsonResponse.dump());
+			res.end();
+		});
+
+	CROW_ROUTE(app, "/edit") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
-        ([&db](const crow::request& req, crow::response& res, std::string id){
+        ([&db](const crow::request& req, crow::response& res){
+			
+
+			Task submitted = buildTaskFromJson(req.body);
+			res.code = 200;
 
 			if (req.method == crow::HTTPMethod::GET) {
 				// read database
-				
-				
-				// Assigned
-				// Category
+				Task existingTask = db.getTask(submitted);
+				//format a response
+				crow::json::wvalue jsonTask = buildJsonFromTask(existingTask);
+				cout << "writing response, ";
+				res.write(jsonTask.dump());
+
 			} else if (req.method == crow::HTTPMethod::PATCH) {
 				// Update only changed elements
+				bool exists = db.checkExists(submitted);
 
-
+				if(exists)
+				{
+					bool updatStatus = db.updateTask(submitted);
+					if(!updatStatus)
+						res.code = 409;
+				}
+				else
+					res.code = 409;			
 			}
-
+			
 			res.end();
 		});
 
@@ -160,6 +202,101 @@ int main()
 	return 1;
 }
 
+crow::json::wvalue buildJsonFromTask(Task& task)
+{
+	crow::json::wvalue jsonTask;
+	jsonTask["taskid"] = to_string(task.id);
+	jsonTask["title"] = string(task.title);
+	jsonTask["description"] = string(task.description);
+	jsonTask["datecreated"] = string(task.datecreated);
+	jsonTask["partid"] = to_string(task.consumedPart.id);
+	jsonTask["part"] = string(task.consumedPart.name);
+	jsonTask["assigned"] = to_string(task.user.id);
+	jsonTask["assignedName"] = string(task.user.name);
+
+	return jsonTask;
+}
+
+Task buildTaskFromJson(string reqBody)
+{
+				
+	Task t;
+	const crow::json::rvalue& parsed = crow::json::load(reqBody);
+	
+	Part* p = &t.consumedPart;
+	User* u = &t.user;
+
+	///    Convert JSON data to raw data for Task struct
+	// Parts
+	try{
+		//part id
+		p->id = parsed["partid"].i(); //atoi(id.c_str());
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find part id in req body\n";
+	}
+	
+	try
+	{
+		//part name
+		memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"couldnt find part name in req body\n";
+	}
+	
+	try
+	{
+		//User Id
+		u->id = parsed["assigned"].i();
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find user id in req body\n";
+	}
+
+	try
+	{
+		// User name
+		memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find user name in req body\n";
+	}
+	
+	try
+	{
+		//task id
+		t.id = parsed["taskid"].i();
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find task id in req body\n";
+	}
+	try
+	{
+		// Task title
+		memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find task title in req body\n";
+	}
+
+	try
+	{
+		// Task Descriptoin
+		memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
+	}
+	catch(...)
+	{
+		std::cerr <<"could not find task description in req body\n";
+	}
+	return t;
+}
 
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name) {

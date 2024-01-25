@@ -9,9 +9,9 @@
 
 typedef struct _Task {
 	ID id;
-	char title[TASK_TITLE_LENGTH];
-	char description[DESCRIPTION_LENGTH];
-	char datecreated[DATE_LENGTH];
+	char title[TASK_TITLE_LENGTH] = {0};
+	char description[DESCRIPTION_LENGTH] = {0};
+	char datecreated[DATE_LENGTH] = {0};
 	Part consumedPart;
 	User user;
 
@@ -19,7 +19,7 @@ typedef struct _Task {
 	//0: id, 1: title, 2: description, 3: partid, 4: userid
 	enum COLUMNS {IDCOL, TITLE, DESCRIPTION, PARTID, USERID};
 
-	_Task() : timeAdded(std::chrono::system_clock::now()) {}
+	_Task() : timeAdded(std::chrono::system_clock::now()), id(0) {}
 
 	_Task(Part part) {
 		this->consumedPart = part;

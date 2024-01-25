@@ -120,6 +120,89 @@ public:
 		std::cout << "Running insert query: " << insertQuery.str() << std::endl;
 		return this->run(insertQuery.str(), NULL);
 	}
+	bool checkExists(Task& t)
+	{
+		string TaskTable = "Tasks";
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		bool exists = false;
+
+		if(t.id != 0)
+		{
+			exists = this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) 
+								{
+									int foundTask;
+
+									for(int row = 0; row < argc; row++)
+									{
+										if (strcmp(colNames[row], "id") == 0)
+											foundTask = stoi(argv[row]);
+									}
+									if(!foundTask)
+										return 1;
+
+									return 0;
+								});
+		}
+		return exists;
+	}
+	//get task from id
+	Task getTask(Task& t)
+	{
+		Task foundTask;
+		string TaskTable = "Tasks";
+
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		
+		if (!t.consumedPart.id)
+			return Part();
+
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			Task* foundTask = (Task*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				
+				if (strcmp(colNames[row], "id") == 0) {
+					foundTask->id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "title") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->title, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "description") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->description, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "datecreated") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->datecreated, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partid") == 0) {
+					foundTask->consumedPart.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "userid") == 0) {
+					foundTask->user.id = stoi(argv[row]);
+				}
+			}
+
+			return 0;
+		}, (void*)&foundTask);
+
+		if(foundTask.id)
+		{
+			cout << "Retrieved a taskId > 0, ";
+			foundTask.consumedPart = this->getPart(foundTask);
+			foundTask.user = this->getUser(foundTask.user.id);
+			return foundTask;
+		}
+		
+		return Task();
+		
+	}
 	//get part names from id
 	Part getPart(Task& t)
 	{
@@ -159,6 +242,49 @@ public:
 		
 	}
 
+		//get part names from id
+	vector<Part> getAllParts(Task& t)
+	{
+		vector<Part> allParts;
+		string PartTable = "Parts";
+
+		stringstream selectQuery;
+		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
+		
+		if (!t.consumedPart.id)
+			return vector<Part>();
+
+		cout << "Running query: " << selectQuery.str() << std::endl;
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+		
+			vector<Part>* allParts = (vector<Part>*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				
+				Part entry;
+
+				if (strcmp(colNames[row], "id") == 0) {
+					entry.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.serialNumber, argv[row], length);
+				}
+				allParts->push_back(entry);
+			}
+
+			return 0;
+		}, (void*)&allParts);
+
+		return allParts;
+		
+	}
+
 	User getUser(int id)
 	{
 		User foundUser;
@@ -186,34 +312,46 @@ public:
 		return foundUser;
 	}
 
+	vector<User> getAllUsers(int id)
+	{
+		vector<User> foundUsers;
+		string UsersTable = "Users";
+		stringstream selectQuery;
+
+		selectQuery << "SELECT * FROM "<< UsersTable;
+
+		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
+
+			vector<User>* foundUsers = (vector<User>*)data;
+
+			for(int row = 0; row < argc; row++)
+			{
+				User entry;
+				if (strcmp(colNames[row], "id") == 0) {
+					entry.id = stoi(argv[row]);
+				}
+				else if (strcmp(colNames[row], "name") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(entry.name, argv[row], length);
+				}
+				foundUsers->push_back(entry);
+			}
+			return 0;
+		}, (void*)&foundUsers);
+		return foundUsers;
+	}
+
 	//get tasks by filter
-	vector<Task> getFilteredTasks(string key, Task::COLUMNS column)
+	vector<Task> getFilteredTasks(string& key)
 	{
 		string TaskTable = "Tasks";
 		stringstream selectQuery;
 		string colName;
 
-		switch(column)
-		{
-		case 0:
-			colName = "id";
-			break;
-		case 1:
-			colName = "title";
-			break;
-		case 2:
-			colName = "description";
-			break;
-		case 3:
-			colName = "partid";
-			break;
-		default: 
-			colName = "title";
-		}
-
 		vector<Task> tasks;
-
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "'%" << key << "%'";
+		cout << "searching for key: " << key << ", ";
+		//SELECT ALL DISTINCT 
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
@@ -249,12 +387,17 @@ public:
 			tasks->push_back(fromDbQuery);
 			return 0;
 		}, (void*)&tasks);
+
 		cout << "Found " << tasks.size() << " matches, ";
-		cout << "Getting part data, ";
-		for(Task & task : tasks)
+		
+		if(tasks.size() > 0)
 		{
-			task.consumedPart = this->getPart(task);
-			task.user = this->getUser(task.user.id);
+			cout << "Getting part data, ";
+			for(Task & task : tasks)
+			{
+				task.consumedPart = this->getPart(task);
+				task.user = this->getUser(task.user.id);
+			}
 		}
 		return tasks;
 	}
