@@ -129,33 +129,101 @@ int main()
 				}
 
 				// Does not exist, add it
-				db.insertTask(t);
+				bool insertRes = db.insertTask(t);
+
+				// Success or fail
+				if (insertRes == SQLITE_OK) {
+					res.code = 200;
+				} else {
+					res.code = 500;
+				}
 				
 				res.code = 200;
 				res.end();
 			} else if (req.method == crow::HTTPMethod::PUT) {
 				// Check if task exists
 				// if not, return "not found"
+				// build JSON object from body
+				const crow::json::rvalue& parsed = crow::json::load(req.body);
+				// Create task object from JSON data
+				Task t;
+				Part* p = &t.consumedPart;
+				User* u = &t.user;
+
+				///    Convert JSON data to raw data for Task struct
+				// Parts
+				p->id = parsed["id"].i(); //atoi(id.c_str());
+				memcpy(p->name,			parsed["part"].s().s_,			PART_NAME_LENGTH);
+				
+				// User
+				u->id = parsed["assigned"].i();
+				memcpy(u->name,			parsed["assignedName"].s().s_,	USER_NAME_LENGTH);
+
+				// Task
+				memcpy(t.title,			parsed["title"].s().s_,			TASK_TITLE_LENGTH);
+				memcpy(t.description,	parsed["description"].s().s_,	DESCRIPTION_LENGTH);
+
+
+				// Check if task exists
+				// Construct a search with two search criteria
+				//  Users can only have one task per part, so check if a task exists with this user and the part we want (match both userid and partid)
+				Search s;
+				s.type = S_AND; // Ensure BOTH/ALL search conditions are true
+				s.searches.push_back({.col = Task::USERID, .key = std::to_string(u->id)});
+				s.searches.push_back({.col = Task::PARTID, .key = std::to_string(p->id)});
+				
+				std::vector<Task> tasks = db.getFilteredTasks(s); // Search and return results
+				bool exists = tasks.size() > 0;
+				
+				// Return error page, temporary basic string for now
+				// Does not exist, so we can't edit it
+				if (!exists) {
+					res.code = 404;
+					std::ostringstream msg;
+					msg << "Error 404 - Not Found. Task for user '" << u->name << "' for part '[" << p->id << "] " << p->name << "' Must first exist before it can be edited. It does not exist." << std::endl;
+					res.write(msg.str());
+					res.end();
+					return;
+				}
 
 				// Replace existing task with provided data
+				bool updateRes = db.updateTask(t);
 
-				// std::cout << "  Part:" << std::endl << "Part ID:" << p->id << std::endl << "Part Name: " << p->name << std::endl <<
-				// "  User:" << std::endl << "User ID: " << u->id << std::endl << "User Name:" << u->name << std::endl << 
-				// "  Task: " << std::endl << "Task Title: " << t.title << std::endl << "Description: " << t.description << std::endl;
+				// Success or fail
+				if (updateRes == SQLITE_OK) {
+					res.code = 200;
+				} else {
+					res.code = 500;
+				}
 
-
+				res.end();
 			}
 
 			res.end();
 			
 		});
 
-	CROW_ROUTE(app, "/delete/<string>") // Replace exisitng task
+	CROW_ROUTE(app, "/delete") // Replace exisitng task
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::DELETE)
-        ([&db](const crow::request& req, crow::response& res, std::string id){
+        ([&db](const crow::request& req, crow::response& res){
+
+			// Load JSON body
+			const crow::json::rvalue& parsed = crow::json::load(req.body);
+
+			int id = parsed["id"].i();
+
 
 			// Delete task if exists in database
-			db.deleteTask(id);
+			bool deleteRes = db.deleteTask(id);
+
+			// Check if the query was successful
+			if (deleteRes == false) { // no error
+				res.code = 200;
+			} else { // yes error
+				res.code = 500;
+			}
+
+			res.end();
 
 		});
 

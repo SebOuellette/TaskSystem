@@ -66,6 +66,7 @@ public:
 		if (exRet != SQLITE_OK) {
 			std::cerr << "Error performing query: " << errorMsg << ". Retcode: " << to_string(exRet) << std::endl;
 			sqlite3_free(errorMsg);
+			return SQLITE_ERROR;
 		}
 #ifdef LOG_SUCCESSFUL_QUERIES
 		else {
