@@ -96,6 +96,7 @@ int main()
 			}
 			cout << "writing response, ";
 			jsonResponse = std::move(jsonFilteredTasks);
+			res.code = 200;
 			res.write(jsonResponse.dump());
 			res.end();
 		});
