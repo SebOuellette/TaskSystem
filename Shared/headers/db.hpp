@@ -192,9 +192,15 @@ public:
 			return 0;
 		}, (void*)&foundTask);
 
-		task.consumedPart = this->getPart(task);
-		task.user = this->getUser(task.user.id);
-		return foundTask;
+		if(foundTask.id)
+		{
+			cout << "Retrieved a taskId > 0, ";
+			foundTask.consumedPart = this->getPart(foundTask);
+			foundTask.user = this->getUser(foundTask.user.id);
+			return foundTask;
+		}
+		
+		return Task();
 		
 	}
 	//get part names from id
@@ -237,7 +243,7 @@ public:
 	}
 
 		//get part names from id
-	Part getAllParts(Task& t)
+	vector<Part> getAllParts(Task& t)
 	{
 		vector<Part> allParts;
 		string PartTable = "Parts";
@@ -246,7 +252,7 @@ public:
 		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
 		
 		if (!t.consumedPart.id)
-			return Part();
+			return vector<Part>();
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
@@ -269,13 +275,13 @@ public:
 					int length = strlen(argv[row]) + 1;
 					strncpy(entry.serialNumber, argv[row], length);
 				}
-				allParts.push_back(entry);
+				allParts->push_back(entry);
 			}
 
 			return 0;
 		}, (void*)&allParts);
 
-		return foundPart;
+		return allParts;
 		
 	}
 
@@ -316,7 +322,7 @@ public:
 
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
-			vector<User>* foundUsers = (User*)data;
+			vector<User>* foundUsers = (vector<User>*)data;
 
 			for(int row = 0; row < argc; row++)
 			{
@@ -335,38 +341,17 @@ public:
 		return foundUsers;
 	}
 
-
-
-
-
 	//get tasks by filter
-	vector<Task> getFilteredTasks(string& key, Task::COLUMNS column)
+	vector<Task> getFilteredTasks(string& key)
 	{
 		string TaskTable = "Tasks";
 		stringstream selectQuery;
 		string colName;
 
-		switch(column)
-		{
-		case 0:
-			colName = "id";
-			break;
-		case 1:
-			colName = "title";
-			break;
-		case 2:
-			colName = "description";
-			break;
-		case 3:
-			colName = "partid";
-			break;
-		default: 
-			colName = "title";
-		}
-
 		vector<Task> tasks;
-
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE " << colName << " LIKE " << "'%" << key << "%'";
+		cout << "searching for key: " << key << ", ";
+		//SELECT ALL DISTINCT 
+		selectQuery << "SELECT * FROM " << TaskTable << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
@@ -402,12 +387,17 @@ public:
 			tasks->push_back(fromDbQuery);
 			return 0;
 		}, (void*)&tasks);
+
 		cout << "Found " << tasks.size() << " matches, ";
-		cout << "Getting part data, ";
-		for(Task & task : tasks)
+		
+		if(tasks.size() > 0)
 		{
-			task.consumedPart = this->getPart(task);
-			task.user = this->getUser(task.user.id);
+			cout << "Getting part data, ";
+			for(Task & task : tasks)
+			{
+				task.consumedPart = this->getPart(task);
+				task.user = this->getUser(task.user.id);
+			}
 		}
 		return tasks;
 	}

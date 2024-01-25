@@ -7,9 +7,9 @@
 
 typedef struct _User {
     ID id;
-    char name[USER_NAME_LENGTH];
+    char name[USER_NAME_LENGTH]={0};
     
-    _User(){}
+    _User() : id(0){}
 
     _User& operator=(const _User& other){
 		if (this == &other)

@@ -18,7 +18,7 @@ std::string loadFile(crow::response& res, std::string _folder, std::string _name
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
 bool isAuthorized(ID userID, const crow::request& req);
 Task buildTaskFromJson(string reqBody);
-crow::json::wvalue buildJsonFromTask(Task& task)
+crow::json::wvalue buildJsonFromTask(Task& task);
 
 // Main Function
 int main()
@@ -75,22 +75,30 @@ int main()
 	
 	CROW_ROUTE(app, "/search") // Get a current task list by key in json body
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
-        ([&db](const crow::request& req){
+        ([&db](const crow::request& req, crow::response& res){
 		
-			json::rvalue jsonResponse;
-			const crow::json::rvalue& parsed = crow::json::load(reqBody);
+			crow::json::wvalue jsonResponse;
+			const crow::json::rvalue& parsed = crow::json::load(req.body);
 			vector<Task> filteredTasks;
-			vector<string> keys;
+			crow::json::wvalue jsonKey = parsed["key"];
+			string key = jsonKey.dump();
 
-        	for(auto& j: parsed["key"].array_items()) {
-            	keys.push_back(j.dump());
-				vector<Task> returnedTasks =  db.getFilteredTasks(keyValue);
-				filteredTasks.insert(filteredTasks.end(), returnedTasks.begin(), returnedTasks.end());
-        	}
+			key = key.substr(1, key.size() - 2);
+        	
+			filteredTasks =  db.getFilteredTasks(key);
 
-			jsonResponse = std::move(filteredTasks);
-			return crow::response(std::move(jsonResponse));
-		}
+			vector<crow::json::wvalue> jsonFilteredTasks;
+
+			for(int i = 0; i < filteredTasks.size(); i++)
+			{
+				crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
+				jsonFilteredTasks.push_back(jsonTask);
+			}
+			cout << "writing response, ";
+			jsonResponse = std::move(jsonFilteredTasks);
+			res.write(jsonResponse.dump());
+			res.end();
+		});
 
 	CROW_ROUTE(app, "/edit") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
@@ -98,14 +106,15 @@ int main()
 			
 
 			Task submitted = buildTaskFromJson(req.body);
-			res->code = 200;
+			res.code = 200;
 
 			if (req.method == crow::HTTPMethod::GET) {
 				// read database
 				Task existingTask = db.getTask(submitted);
 				//format a response
 				crow::json::wvalue jsonTask = buildJsonFromTask(existingTask);
-				res->write(jsonTask);
+				cout << "writing response, ";
+				res.write(jsonTask.dump());
 
 			} else if (req.method == crow::HTTPMethod::PATCH) {
 				// Update only changed elements
@@ -115,12 +124,12 @@ int main()
 				{
 					bool updatStatus = db.updateTask(submitted);
 					if(!updatStatus)
-						res->code = 409;
+						res.code = 409;
 				}
 				else
-					res->code = 409;		
+					res.code = 409;			
 			}
-
+			
 			res.end();
 		});
 
@@ -196,14 +205,14 @@ int main()
 crow::json::wvalue buildJsonFromTask(Task& task)
 {
 	crow::json::wvalue jsonTask;
-	jsonTask["taskid"] = json::value::int(task.id);
-	jsonTask["title"] = json::value::string(task.title);
-	jsonTask["description"] = json::value::string(task.description);
-	jsonTask["datecreated"] = json::value::string(task.datecreated);
-	jsonTask["partid"] = json::value::int(task.consumedPart.id);
-	jsonTask["part"] = json::value::string(task.consumedPart.name);
-	jsonTask["assigned"] = json::value::string(task.user.id);
-	jsonTask["assignedName"] = json::value::string(task.user.name);
+	jsonTask["taskid"] = to_string(task.id);
+	jsonTask["title"] = string(task.title);
+	jsonTask["description"] = string(task.description);
+	jsonTask["datecreated"] = string(task.datecreated);
+	jsonTask["partid"] = to_string(task.consumedPart.id);
+	jsonTask["part"] = string(task.consumedPart.name);
+	jsonTask["assigned"] = to_string(task.user.id);
+	jsonTask["assignedName"] = string(task.user.name);
 
 	return jsonTask;
 }
@@ -286,18 +295,6 @@ Task buildTaskFromJson(string reqBody)
 	{
 		std::cerr <<"could not find task description in req body\n";
 	}
-
-
-
-
-	
-
-
-
-
-
-	
-
 	return t;
 }
 
