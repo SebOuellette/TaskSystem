@@ -327,6 +327,7 @@
     </div>
 
     <script type="text/javascript" charset="utf-8">
+
       function submitReport() {
         fetch(`${window.location.href}add`, {
           method: "POST",
@@ -346,7 +347,13 @@
         });
       }
 
-      fetch("https://jsonplaceholder.typicode.com/todos")
+      setInterval(function () {
+            PopulateTable();
+        }, 15000);
+      
+      function PopulateTable()
+      {
+        fetch("https://jsonplaceholder.typicode.com/todos")
         .then(function (response) {
           return response.json();
         })
@@ -354,6 +361,7 @@
           console.log(apiJsonData);
           renderDataInTheTable(apiJsonData);
         });
+      }
 
       var count = 1;
       function renderDataInTheTable(todos) {
