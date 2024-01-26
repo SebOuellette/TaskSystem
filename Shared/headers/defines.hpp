@@ -16,6 +16,8 @@
 #define PART_SERIAL_LENGTH 50
 #define PART_DISPLAY_LIMIT 500
 
+#define TASK_ID_QUERYSTRING "id"
+
 //User Defines
 #define USER_NAME_LENGTH 25
 

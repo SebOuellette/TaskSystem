@@ -69,13 +69,13 @@ int main()
         ([&db](const crow::request& req, crow::response& res){
 		
 			crow::json::wvalue jsonResponse;
-			const crow::json::rvalue& parsed = crow::json::load(req.body);
-			vector<Task> filteredTasks;
-			crow::json::wvalue jsonKey = parsed["key"];
-			string key = jsonKey.dump();
 
-			key = key.substr(1, key.size() - 2);
+			crow::query_string keyParam = req.url_params;
+            auto keys = keyParam.keys();
+            auto keyValue = keyParam.get(string(keys[0]));
+            std::string key = string(keyValue);
         	
+			vector<Task> filteredTasks;
 			filteredTasks =  db.getFilteredTasks(key);
 
 			vector<crow::json::wvalue> jsonFilteredTasks;
@@ -197,14 +197,14 @@ int main()
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::DELETE)
         ([&db](const crow::request& req, crow::response& res){
 
-			// Load JSON body
-			const crow::json::rvalue& parsed = crow::json::load(req.body);
-
-			int id = parsed["id"].i();
-
+			// Load key querystring
+			crow::query_string keyParam = req.url_params;
+            auto keys = keyParam.keys();
+            auto keyValue = keyParam.get(string(keys[0]));
+            std::string id = string(keyValue);
 
 			// Delete task if exists in database
-			bool deleteRes = db.deleteTask(std::to_string(id));
+			bool deleteRes = db.deleteTask(id);
 
 			// Check if the query was successful
 			if (deleteRes == false) { // no error

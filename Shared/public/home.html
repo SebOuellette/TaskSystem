@@ -353,7 +353,7 @@
       
       function PopulateTable()
       {
-        fetch("https://jsonplaceholder.typicode.com/todos")
+      fetch(`/search?key=`)
         .then(function (response) {
           return response.json();
         })
@@ -363,10 +363,12 @@
         });
       }
 
-      var count = 1;
+      
       function renderDataInTheTable(todos) {
+        console.log(todos);
         const mytable = document.getElementById("html-data-table");
         todos.forEach((todo) => {
+          var count = 1;
           let newRow = document.createElement("tr");
           Object.values(todo).forEach((value) => {
             if (count == 2) {
@@ -385,13 +387,10 @@
               div.appendChild(paragraph);
               cell.appendChild(div);
               newRow.appendChild(cell);
-            } /*else if (count == 7) {
+            }
+            else {
               let cell = document.createElement("td");
-              cell.value = value;
-              newRow.appendChild(cell);
-              count = 1;
-            }*/ else {
-              let cell = document.createElement("td");
+              console.log(value);
               cell.innerText = value;
               newRow.appendChild(cell);
             }
@@ -412,7 +411,7 @@
           deleteCell.innerText = "Delete";
           deleteCell.className = "button-style";
           deleteCell.onclick = () => {
-            deleteFunction();
+            deleteFunction(todo.taskid);
           };
           newRow.appendChild(deleteCell);
 
@@ -443,8 +442,10 @@
         alert("Edit clicked!");
       }
 
-      function deleteFunction() {
+      function deleteFunction(element) {
         // Add's your delete functionality
+        console.log(element);
+
         alert("Delete clicked!");
       }
 

@@ -1,7 +1,7 @@
 // To run in CMD
 docker run --rm -ti -p 8080:8080 -v %cd%\Shared:/Shared --name tasksystem sebouellette/webserver:shoppingcart /Shared/build/tasksystem
 
-// To just load bash so you can compile
+// To just load bash so you can compile MUST BE IN CMD
 docker run --rm -ti -p 8080:8080 -v %cd%\Shared:/Shared --name tasksystem sebouellette/webserver:shoppingcart bash
 
 // To Run in bash
@@ -9,3 +9,4 @@ docker run --rm -ti -p 8080:8080 -v "$(pwd)/Shared:/Shared" --name tasksystem se
 
 // Public server startup command
 docker run --rm -d -p 8085:8080 -v "$(pwd)/Shared:/Shared" --name tasksystem sebouellette/webserver:shoppingcart /Shared/build/tasksystem
+
