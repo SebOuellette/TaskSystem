@@ -347,6 +347,7 @@
         });
       }
 
+
       setInterval(function () {
             PopulateTable();
         }, 15000);
@@ -367,35 +368,47 @@
       function renderDataInTheTable(todos) {
         console.log(todos);
         const mytable = document.getElementById("html-data-table");
+        var count = 1;
         todos.forEach((todo) => {
-          var count = 1;
+          
           let newRow = document.createElement("tr");
-          Object.values(todo).forEach((value) => {
-            if (count == 2) {
-              let cell = document.createElement("td");
+          //Object.values(todo).forEach((value) => {
 
-              let button = document.createElement("button");
-              button.className = "accordion";
-              button.innerText = "Click to expand Description";
-              cell.appendChild(button);
+            console.log(todo);
 
-              let div = document.createElement("div");
-              div.className = "panel";
 
-              let paragraph = document.createElement("p");
-              paragraph.innerText = "Description";
-              div.appendChild(paragraph);
-              cell.appendChild(div);
-              newRow.appendChild(cell);
-            }
-            else {
-              let cell = document.createElement("td");
-              console.log(value);
-              cell.innerText = value;
-              newRow.appendChild(cell);
-            }
-            count++;
-          });
+            let ttitle = document.createElement("td");
+            ttitle.innerText = todo.title;
+            newRow.appendChild(ttitle);
+
+            // Description
+            let tdescription = document.createElement("td");
+            // Description button
+            let button = document.createElement("button");
+            button.className = "accordion";
+            button.innerText = "Click to expand...";
+            tdescription.appendChild(button);
+
+            // Description expansion div
+            let div = document.createElement("div");
+            div.className = "panel";
+
+            let paragraph = document.createElement("p");
+            paragraph.innerText = todo.description;
+            div.appendChild(paragraph);
+            tdescription.appendChild(div);
+            newRow.appendChild(tdescription);
+
+            let tcategory = document.createElement("td");
+            tcategory.innerText = todo.part;
+            newRow.appendChild(tcategory);
+
+            let tassigned = document.createElement("td");
+            tassigned.innerText = todo.assignedName;
+            newRow.appendChild(tassigned);
+
+          count++;
+          //});
 
           // add the edit button to the table
           let editCell = document.createElement("td");
@@ -442,9 +455,10 @@
         alert("Edit clicked!");
       }
 
-      function deleteFunction(element) {
+      function deleteFunction(id) {
         // Add's your delete functionality
-        console.log(element);
+        console.log(id);
+        fetch(`/delete/${id}`)
 
         alert("Delete clicked!");
       }
