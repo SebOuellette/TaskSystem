@@ -287,6 +287,7 @@
       <table id="html-data-table">
         <thead>
           <tr>
+            <th style="display: none;">ID</th>
             <th class="title">Title</th>
             <th>Description</th>
             <th>Category</th>
@@ -298,6 +299,7 @@
         <tbody>
           <tr>
             <td class="title">Title</td>
+            <td style="display: none;" id="taskID">ID</td>
             <td>
               <button class="accordion">Description</button>
               <div class="panel">
@@ -430,8 +432,11 @@
 
     <script>
       function editFunction() {
-        // Add's edit functionality
-        alert("Edit clicked!");
+        let url=window.location.href;
+        var id=document.getElementById("taskID").innerText;
+        url=url+"editor/"+id;
+        window.location.href=url;
+        //alert("Edit clicked!");
       }
 
       function deleteFunction() {

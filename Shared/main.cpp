@@ -45,7 +45,7 @@ int main()
 	CROW_ROUTE(app, "/help") // Index page
 	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
         ([&db](const request& req, response& res){
-			// Redirect to the cart page
+			// Redirect to the help page
             res.code = 200;
 		
 			res.write(loadFile(res, "", "help.html"));
@@ -53,6 +53,16 @@ int main()
             res.end();
         });
 
+	CROW_ROUTE(app, "/editor/<int>") //  page
+	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET)
+        ([&db](const request& req, response& res,int id){
+			// Redirect to the editor page
+            res.code = 200;
+		
+			res.write(loadFile(res, "", "editor.html"));
+
+            res.end();
+        });
 
 	CROW_ROUTE(app, "/edit/<int>") // Get a current task by id
 	.methods(HTTPMethod::OPTIONS, HTTPMethod::GET, HTTPMethod::PATCH)
