@@ -318,6 +318,12 @@
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
+        }).then(()=>{
+
+          // Once we add a new task, display data about the task in the table. This lets us know if something already exists as well
+
+          // Search for the task we added and display it
+          PopulateTable(document.getElementById("title").value)
         });
       }
 
