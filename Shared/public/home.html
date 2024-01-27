@@ -395,6 +395,9 @@
             button.className = "accordion";
             button.innerText = "Click to expand...";
             tdescription.appendChild(button);
+            tdescription.onclick = () => { 
+              openDescription(button);
+            };
 
             // Description expansion div
             let div = document.createElement("div");
@@ -432,25 +435,19 @@
             deleteFunction(task.taskid);
           };
           newRow.appendChild(deleteCell);
-
-          // adds the accordion dropdown functionality to the table
-          var acc = document.getElementsByClassName("accordion");
-          var i;
-
-          for (i = 0; i < acc.length; i++) {
-            acc[i].addEventListener("click", function (event) {
-              this.classList.toggle("active");
-              var panel = this.nextElementSibling;
-              if (panel.style.maxHeight) {
-                panel.style.maxHeight = null;
-              } else {
-                panel.style.maxHeight = panel.scrollHeight + "px";
-              }
-            });
-          }
-
           mytable.appendChild(newRow);
         });
+      }
+
+      // Accordion dropdown functionality
+      function openDescription(el) {
+        el.classList.toggle("active");
+        var panel = el.nextElementSibling;
+        if (panel.style.maxHeight) {
+          panel.style.maxHeight = null;
+        } else {
+          panel.style.maxHeight = panel.scrollHeight + "px";
+        }
       }
     </script>
 
