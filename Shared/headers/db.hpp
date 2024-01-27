@@ -309,16 +309,13 @@ public:
 	}
 
 		//get part names from id
-	vector<Part> getAllParts(Task& t)
+	vector<Part> getAllParts()
 	{
 		vector<Part> allParts;
 		string PartTable = "Parts";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
-		
-		if (!t.consumedPart.id)
-			return vector<Part>();
+		selectQuery << "SELECT * FROM "<< PartTable;
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {

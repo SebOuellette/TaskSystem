@@ -259,10 +259,7 @@
               <!--[[PARTS_LIST]]-->
             </select>
             <span
-              style="margin-top: 10px; margin-bottom: 5px"
-              id="assignedlable"
-              >Assignee</span
-            >
+              style="margin-top: 10px; margin-bottom: 5px" id="assignedlable">Assignee</span>
             <select id="assigned" name="category" aria-placeholder="assigned">
               <option value="1">Zebadiah</option>
               <option value="2">Tom</option>
@@ -278,7 +275,9 @@
       </div>
     </div>
 
-    <button class="filter-btn">Filter</button>
+    <label for="filter">Search: </label>
+    <input name="filter" type="text" id="filterkey">
+    <button class="filter-btn" id="filter-btn" onclick="filterResults()">Filter</button>
     <h2 style="margin-left: 20px">Task List</h2>
 
     <div class="task-list-container">
@@ -294,39 +293,14 @@
           </tr>
         </thead>
         <tbody>
-          <tr>
-            <td class="title">Title</td>
-            <td>
-              <button class="accordion">Description</button>
-              <div class="panel">
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-              </div>
-            </td>
-            <td>Category</td>
-            <td class="assigned">Assignee</td>
-            <td class="buttons">
-              <button class="button-style" onclick="editFunction()">
-                Edit
-              </button>
-            </td>
-            <td class="buttons">
-              <button class="button-style" onclick="deleteFunction()">
-                Delete
-              </button>
-            </td>
-          </tr>
-
           <!-- Populate this section with your task data using server-side rendering or JavaScript -->
         </tbody>
       </table>
     </div>
 
     <script type="text/javascript" charset="utf-8">
+
+
 
       function submitReport() {
         fetch(`${window.location.href}add`, {
@@ -347,56 +321,77 @@
         });
       }
 
-      setInterval(function () {
-            PopulateTable();
-        }, 15000);
+      window.onload = function(e) {
+        PopulateTable();
+      }
       
-      function PopulateTable()
+      function PopulateTable(searchterm)
       {
-        fetch("https://jsonplaceholder.typicode.com/todos")
-        .then(function (response) {
-          return response.json();
-        })
-        .then(function (apiJsonData) {
-          console.log(apiJsonData);
-          renderDataInTheTable(apiJsonData);
-        });
+        if(searchterm == null)
+        {
+          searchterm = "";
+        }
+        fetch("http://localhost:8080/search?=" + searchterm, {
+            headers: {'Content-Type': 'application/json'
+                    }
+          }).then(function (response) {
+            return response.json();
+          })
+          .then(function (apiJsonData) {
+            console.log(apiJsonData);
+            renderDataInTheTable(apiJsonData);
+          });
+      }
+
+      function filterResults()
+      {
+        
+        var filter = document.getElementById("filterkey");
+        
+        var thIndex = 1;
+        var table = document.getElementById("html-data-table");
+        var rowCount = table.rows.length;
+        for (var i = thIndex + 1; i < rowCount; i++) {
+            table.deleteRow(thIndex);
+        }
+
+        PopulateTable(filter.value);
       }
 
       var count = 1;
-      function renderDataInTheTable(todos) {
+      function renderDataInTheTable(tasks) {
         const mytable = document.getElementById("html-data-table");
-        todos.forEach((todo) => {
+        tasks.forEach((task) => {
+
           let newRow = document.createElement("tr");
-          Object.values(todo).forEach((value) => {
-            if (count == 2) {
-              let cell = document.createElement("td");
+          let titleCell = document.createElement("td");
+          let descCell = document.createElement("td");
+          let partCell = document.createElement("td");
+          let assignedCell = document.createElement("td");
+          let div = document.createElement("div");
+          let paragraph = document.createElement("p");
+          let button = document.createElement("button");
 
-              let button = document.createElement("button");
-              button.className = "accordion";
-              button.innerText = "Click to expand Description";
-              cell.appendChild(button);
+          div.className = "panel";
+          button.className = "accordion";
+          button.innerText = "Click to expand Description";
+          titleCell.innerText = task["title"];
+          partCell.innerText = task["part"];
+          assignedCell.innerText = task["assigned"];
+          paragraph.innerText = task["description"]
 
-              let div = document.createElement("div");
-              div.className = "panel";
+          div.appendChild(paragraph);
+          descCell.appendChild(button);
+          descCell.appendChild(div);
+          newRow.appendChild(titleCell);
+          newRow.appendChild(descCell);
+          newRow.appendChild(partCell);
+          newRow.appendChild(assignedCell);
 
-              let paragraph = document.createElement("p");
-              paragraph.innerText = "Description";
-              div.appendChild(paragraph);
-              cell.appendChild(div);
-              newRow.appendChild(cell);
-            } /*else if (count == 7) {
-              let cell = document.createElement("td");
-              cell.value = value;
-              newRow.appendChild(cell);
-              count = 1;
-            }*/ else {
-              let cell = document.createElement("td");
-              cell.innerText = value;
-              newRow.appendChild(cell);
-            }
-            count++;
-          });
+
+
+          newRow.setAttribute('id', task["taskid"]);
+
 
           // add the edit button to the table
           let editCell = document.createElement("td");
@@ -421,7 +416,7 @@
           var i;
 
           for (i = 0; i < acc.length; i++) {
-            acc[i].addEventListener("click", function () {
+            acc[i].addEventListener("click", function (event) {
               this.classList.toggle("active");
               var panel = this.nextElementSibling;
               if (panel.style.maxHeight) {
