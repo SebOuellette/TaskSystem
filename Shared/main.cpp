@@ -9,7 +9,7 @@
 #include <string>
 #include <random>
 #include <ctime>
-#include "headers/crow_all.h"
+
 
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
@@ -17,15 +17,17 @@ std::string replaceTemplates(std::string htmlString, const char templateStr[], s
 bool isAuthorized(ID userID, const crow::request& req);
 Task buildTaskFromJson(string reqBody);
 crow::json::wvalue buildJsonFromTask(Task& task);
+crow::json::wvalue buildJsonFromPart(Part& part);
 
 // Main Function
 int main()
 {
 	srand(time(NULL));
 
-	crow::SimpleApp app;
+	crow::App<crow::CORSHandler> app;
 	// Create and initialize the database
 	TaskDb db;
+	
 
 	CROW_ROUTE(app, "/") // Index page
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
@@ -67,26 +69,33 @@ int main()
 	CROW_ROUTE(app, "/search") // Get a current task list by key in json body
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
         ([&db](const crow::request& req, crow::response& res){
-		
 			crow::json::wvalue jsonResponse;
+			if (req.method == crow::HTTPMethod::GET) {
+				
+				const crow::json::rvalue& parsed = crow::json::load(req.body);
+				vector<Task> filteredTasks;
+				crow::query_string keyParam = req.url_params;
+				auto keys = keyParam.keys();
+				auto keyValue = keyParam.get(string(keys[0]));
+				string searchKey = string(keyValue);
+				filteredTasks =  db.getFilteredTasks(searchKey);
 
-			crow::query_string keyParam = req.url_params;
-            auto keys = keyParam.keys();
-            auto keyValue = keyParam.get(string(keys[0]));
-            std::string key = string(keyValue);
-        	
-			vector<Task> filteredTasks;
-			filteredTasks =  db.getFilteredTasks(key);
+				vector<crow::json::wvalue> jsonFilteredTasks;
 
-			vector<crow::json::wvalue> jsonFilteredTasks;
+				for(int i = 0; i < filteredTasks.size(); i++)
+				{
+					crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
+					jsonFilteredTasks.push_back(jsonTask);
+				}
+				jsonResponse = std::move(jsonFilteredTasks);
 
-			for(int i = 0; i < filteredTasks.size(); i++)
-			{
-				crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
-				jsonFilteredTasks.push_back(jsonTask);
 			}
+			
 			cout << "writing response, ";
-			jsonResponse = std::move(jsonFilteredTasks);
+			
+			res.set_header("Access-Control-Allow-Origin", "127.0.0.1:8080");
+			res.add_header("Content-Type", "application/json");
+
 			res.code = 200;
 			res.write(jsonResponse.dump());
 			res.end();
@@ -206,6 +215,8 @@ int main()
 			// Delete task if exists in database
 			bool deleteRes = db.deleteTask(id);
 
+			std::cout << "Response: " << deleteRes << std::endl;
+
 			// Check if the query was successful
 			if (deleteRes == false) { // no error
 				res.code = 200;
@@ -216,9 +227,6 @@ int main()
 			res.end();
 
 		});
-
-
-
 	// OPTIONS /
 	// GET /edit/<int>
 	// PATCH /edit/<int>
@@ -230,7 +238,14 @@ int main()
 	app.port(8080).multithreaded().run();
 	return 1;
 }
+crow::json::wvalue buildJsonFromPart(Part& part)
+{
+	crow::json::wvalue jsonPart;
+	jsonPart["partid"] = to_string(part.id);
+	jsonPart["name"] = string(part.name);
 
+	return jsonPart;
+}
 crow::json::wvalue buildJsonFromTask(Task& task)
 {
 	crow::json::wvalue jsonTask;

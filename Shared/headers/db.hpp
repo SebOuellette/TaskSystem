@@ -66,7 +66,7 @@ public:
 		if (exRet != SQLITE_OK) {
 			std::cerr << "Error performing query: " << errorMsg << ". Retcode: " << to_string(exRet) << std::endl;
 			sqlite3_free(errorMsg);
-			return SQLITE_ERROR;
+			return 1; // true indicates error
 		}
 #ifdef LOG_SUCCESSFUL_QUERIES
 		else {
@@ -75,7 +75,7 @@ public:
 #endif
 
 		// Returns the exit status. AKA the status of the last query
-		return (exRet == SQLITE_OK);
+		return exRet != SQLITE_OK; // return 0 if all good, 1 if not good;
 	};
 
 	// Initialize the database table
@@ -309,16 +309,13 @@ public:
 	}
 
 		//get part names from id
-	vector<Part> getAllParts(Task& t)
+	vector<Part> getAllParts()
 	{
 		vector<Part> allParts;
 		string PartTable = "Parts";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
-		
-		if (!t.consumedPart.id)
-			return vector<Part>();
+		selectQuery << "SELECT * FROM "<< PartTable;
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
@@ -489,7 +486,7 @@ public:
 
 		if(!id.empty())
 		{
-			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id == " << id;
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id=\"" << id << "\"";
 			cout << "Running query: " << deleteQuery.str() << std::endl;
 			if(this->run(deleteQuery.str()))
 				return true;

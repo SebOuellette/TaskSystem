@@ -259,10 +259,7 @@
               <!--[[PARTS_LIST]]-->
             </select>
             <span
-              style="margin-top: 10px; margin-bottom: 5px"
-              id="assignedlable"
-              >Assignee</span
-            >
+              style="margin-top: 10px; margin-bottom: 5px" id="assignedlable">Assignee</span>
             <select id="assigned" name="category" aria-placeholder="assigned">
               <option value="1">Zebadiah</option>
               <option value="2">Tom</option>
@@ -278,7 +275,9 @@
       </div>
     </div>
 
-    <button class="filter-btn">Filter</button>
+    <label for="filter">Search: </label>
+    <input name="filter" type="text" id="filterkey">
+    <button class="filter-btn" id="filter-btn" onclick="filterResults()">Filter</button>
     <h2 style="margin-left: 20px">Task List</h2>
 
     <div class="task-list-container">
@@ -293,40 +292,15 @@
             <th class="buttons"></th>
           </tr>
         </thead>
-        <tbody>
-          <tr>
-            <td class="title">Title</td>
-            <td>
-              <button class="accordion">Description</button>
-              <div class="panel">
-                <p>
-                  Lorem ipsum dolor sit amet, consectetur adipisicing elit, sed
-                  do eiusmod tempor incididunt ut labore et dolore magna aliqua.
-                  Ut enim ad minim veniam, quis nostrud exercitation ullamco
-                  laboris nisi ut aliquip ex ea commodo consequat.
-                </p>
-              </div>
-            </td>
-            <td>Category</td>
-            <td class="assigned">Assignee</td>
-            <td class="buttons">
-              <button class="button-style" onclick="editFunction()">
-                Edit
-              </button>
-            </td>
-            <td class="buttons">
-              <button class="button-style" onclick="deleteFunction()">
-                Delete
-              </button>
-            </td>
-          </tr>
-
+        <tbody id="dynamic-table-data">
           <!-- Populate this section with your task data using server-side rendering or JavaScript -->
         </tbody>
       </table>
     </div>
 
     <script type="text/javascript" charset="utf-8">
+
+
 
       function submitReport() {
         fetch(`${window.location.href}add`, {
@@ -348,37 +322,64 @@
       }
 
 
+
+      // window.onload = function(e) {
+      //   PopulateTable();
+      // }
+
       setInterval(function () {
             PopulateTable();
         }, 15000);
       
-      function PopulateTable()
+      function PopulateTable(searchterm)
       {
-      fetch(`/search?key=`)
-        .then(function (response) {
-          return response.json();
-        })
-        .then(function (apiJsonData) {
-          console.log(apiJsonData);
-          renderDataInTheTable(apiJsonData);
-        });
+
+        if(searchterm == null)
+        {
+          searchterm = "";
+        }
+        fetch("http://localhost:8080/search?=" + searchterm, {
+            headers: {'Content-Type': 'application/json'
+                    }
+          }).then(function (response) {
+            return response.json();
+          })
+          .then(function (apiJsonData) {
+            console.log(apiJsonData);
+            renderDataInTheTable(apiJsonData);
+          });
       }
 
-      
-      function renderDataInTheTable(todos) {
-        console.log(todos);
-        const mytable = document.getElementById("html-data-table");
-        var count = 1;
-        todos.forEach((todo) => {
-          
+      function filterResults()
+      {
+        
+        var filter = document.getElementById("filterkey");
+        
+        var thIndex = 1;
+        var table = document.getElementById("html-data-table");
+        var rowCount = table.rows.length;
+        for (var i = thIndex + 1; i < rowCount; i++) {
+            table.deleteRow(thIndex);
+        }
+
+        PopulateTable(filter.value);
+      }
+
+      var count = 1;
+      function renderDataInTheTable(tasks) {
+        const mytable = document.getElementById("dynamic-table-data");
+
+        // First, clear all existing elements in mytable
+        mytable.innerHTML = "";
+
+        tasks.forEach((task) => {
+
           let newRow = document.createElement("tr");
           //Object.values(todo).forEach((value) => {
 
-            console.log(todo);
-
 
             let ttitle = document.createElement("td");
-            ttitle.innerText = todo.title;
+            ttitle.innerText = task.title;
             newRow.appendChild(ttitle);
 
             // Description
@@ -394,20 +395,18 @@
             div.className = "panel";
 
             let paragraph = document.createElement("p");
-            paragraph.innerText = todo.description;
+            paragraph.innerText = task.description;
             div.appendChild(paragraph);
             tdescription.appendChild(div);
             newRow.appendChild(tdescription);
 
             let tcategory = document.createElement("td");
-            tcategory.innerText = todo.part;
+            tcategory.innerText = task.part;
             newRow.appendChild(tcategory);
 
             let tassigned = document.createElement("td");
-            tassigned.innerText = todo.assignedName;
+            tassigned.innerText = task.assignedName;
             newRow.appendChild(tassigned);
-
-          count++;
           //});
 
           // add the edit button to the table
@@ -415,7 +414,7 @@
           editCell.innerText = "Edit";
           editCell.className = "button-style";
           editCell.onclick = () => {
-            editFunction();
+            editFunction(task.taskid);
           };
           newRow.appendChild(editCell);
 
@@ -424,7 +423,7 @@
           deleteCell.innerText = "Delete";
           deleteCell.className = "button-style";
           deleteCell.onclick = () => {
-            deleteFunction(todo.taskid);
+            deleteFunction(task.taskid);
           };
           newRow.appendChild(deleteCell);
 
@@ -433,7 +432,7 @@
           var i;
 
           for (i = 0; i < acc.length; i++) {
-            acc[i].addEventListener("click", function () {
+            acc[i].addEventListener("click", function (event) {
               this.classList.toggle("active");
               var panel = this.nextElementSibling;
               if (panel.style.maxHeight) {
@@ -450,17 +449,21 @@
     </script>
 
     <script>
-      function editFunction() {
+      function editFunction(id) {
         // Add's edit functionality
-        alert("Edit clicked!");
+        console.log(`Clicked editor page for id ${id}`);
+        document.location.href = `/editor?id=${id}`
       }
 
       function deleteFunction(id) {
         // Add's your delete functionality
-        console.log(id);
-        fetch(`/delete/${id}`)
-
-        alert("Delete clicked!");
+        console.log(`Clicked delete page for id ${id}`);
+        fetch(`/delete?id=${id}`, {
+          method: "DELETE"
+        }).then(() => {
+          // Update the table
+          PopulateTable();
+        })
       }
 
       var acc = document.getElementsByClassName("accordion");
