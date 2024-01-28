@@ -14,10 +14,12 @@
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
+std::string replaceParts(TaskDb& db, std::string);
 bool isAuthorized(ID userID, const crow::request& req);
 Task buildTaskFromJson(string reqBody);
 crow::json::wvalue buildJsonFromTask(Task& task);
 crow::json::wvalue buildJsonFromPart(Part& part);
+
 
 // Main Function
 int main()
@@ -37,17 +39,7 @@ int main()
 
 			std::string home = loadFile(res, "", "home.html");
 
-			// Get a current list of parts at the time of request
-			std::vector<Part> parts = db.getParts();
-			
-			// // Add all parts to the part dropdown
-			for (int i=0;i<parts.size();i++) {
-				std::stringstream result;
-				// Build new option, append template at the end to allow for another loop
-				result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << " | " << parts[i].serialNumber << "</option>" << PART_TEMPLATE;
-				// replace the template with our new html element
-				home = replaceTemplates(home, PART_TEMPLATE, result.str());
-			}
+			home = replaceParts(db, home);
 		
 			res.write(home);
 
@@ -112,7 +104,11 @@ int main()
 			// Redirect to the editor page
             res.code = 200;
 
-			res.write(loadFile(res, "", "editor.html"));
+			std::string editor = loadFile(res, "", "editor.html");
+
+			editor = replaceParts(db, editor);
+
+			res.write(editor);
 
             res.end();
         });
@@ -156,11 +152,11 @@ int main()
 				if(exists)
 				{
 					bool updatStatus = db.updateTask(submitted);
-					if(!updatStatus)
-						res.code = 409;
+					if(updatStatus) // 1 = error
+						res.code = 500; // Server error
 				}
 				else
-					res.code = 409;			
+					res.code = 404;	// Missing	
 			}
 			
 			res.end();
@@ -422,6 +418,22 @@ std::string replaceTemplates(std::string htmlString, const char templateStr[], s
 	result << before << replacement << after;
 
 	return result.str();
+}
+
+std::string replaceParts(TaskDb& db, std::string html) {
+	// Get a current list of parts at the time of request
+	std::vector<Part> parts = db.getParts();
+	
+	// // Add all parts to the part dropdown
+	for (int i=0;i<parts.size();i++) {
+		std::stringstream result;
+		// Build new option, append template at the end to allow for another loop
+		result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << " | " << parts[i].serialNumber << "</option>" << PART_TEMPLATE;
+		// replace the template with our new html element
+		html = replaceTemplates(html, PART_TEMPLATE, result.str());
+	}
+
+	return html;
 }
 
 // Check if a request is authorized to access page for some userID.
