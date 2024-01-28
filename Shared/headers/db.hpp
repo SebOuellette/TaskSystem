@@ -20,7 +20,7 @@
 // Using sqlite https://www.geeksforgeeks.org/sql-using-c-c-and-sqlite/
 
 // debug
-#define LOG_SUCCESSFUL_QUERIES
+//#define LOG_SUCCESSFUL_QUERIES
 
 using namespace std;
 
@@ -422,7 +422,6 @@ public:
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			vector<Task>* tasks = (vector<Task>*)data;
-			cout << "Entered getFilteredTasks lambda, ";
 			Task fromDbQuery;
 
 			for(int row = 0; row < argc; row++)

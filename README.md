@@ -1,6 +1,13 @@
 # Task System
 
-This is a custom task system webpage
+This is a custom task system for managing hardward-related tasks among a group of users. Features include:
+ - Searching for tasks
+ - Adding new tasks
+ - Dynamically loading tasks
+ - Updating task list
+ - Responsive design
+ - REST compliant
+![Task System Home Page](image.png)
 
 ## Documentation
 
@@ -21,10 +28,61 @@ To use the compiled executable, simply start it using the following comamnd `/Sh
 
 
 ### View home page
-### Request
-`GET` `/`
+`GET` `http://localhost:8080/`<br>
+**Result:** `text/html`
 
+### View Help page
+`GET` `/help`<br>
+**Result:** `text/html`
 
+### Edit Task
+`GET` `/editor`<br>
+**Querystring Parameters:** `?id=<task_id>`<br>
+**Result:** `text/html`
 
+### Search list of tasks
+`GET` `/search`<br>
+**Querystring Parameters:** `?key=<search_string>`<br>
+**Result:** `application/json`<br>
+-> The provided search string is matched against the task title and description then returns an array of all matching tasks
 
+### Find specific task
+`GET` `/edit`<br>
+**Querystring Parameters:** `?id=<task_id>`<br>
+**Result:** `application/json`
+
+### Edit specific task
+`PATCH` `/edit`<br>
+Request body format: `application/json`
+```json
+{
+    "id": <task_id> // required field
+}
+```
+**Result:** `N/A`
+
+### Add new task
+`POST` `/add`
+Request body format: `application.json`
+```json
+{
+    "title": "<task_title>", // required
+    "description": "<task_description>", // required
+    "partid": <part_id>, // required
+    "assigned": <assigned_user_id>, // required
+}
+```
+If a task with this partid and assigned user id already exists, status code `409 Conflict` will be returned. When this result is given, the client must instead perform a PUT request to /add to replace the existing task.
+
+### Replace existing task
+`PUT` `/add`
+Request body format: `application.json`
+```json
+{
+    "title": "<task_title>", // required
+    "description": "<task_description>", // required
+    "partid": <part_id>, // required
+    "assigned": <assigned_user_id>, // required
+}
+```
 

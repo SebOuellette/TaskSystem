@@ -5,11 +5,11 @@ http://localhost:8080/search
 http://localhost:8080/search?key=
 
 ### Search for test task
-http://localhost:8080/search
+http://localhost:8080/search?key=test
 
-{
-    "key": "test"
-}
+### get task data
+http://localhost:8080/edit?id=45
 
 ### Test Delete
-DELETE http://localhost:8080/delete?id=test
+### Assumes task id 46 exists, search for tasks first and choose an id to test
+DELETE http://localhost:8080/delete?id=46
