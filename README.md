@@ -7,6 +7,7 @@ This is a custom task system for managing hardward-related tasks among a group o
  - Updating task list
  - Responsive design
  - REST compliant
+
 ![Task System Home Page](image.png)
 
 ## Documentation
@@ -86,3 +87,10 @@ Request body format: `application.json`
 }
 ```
 
+### Delete specific task
+`GET` `/delete`<br>
+**Querystring Parameters:** `?id=<task_id>`<br>
+**Result:** `N/A`
+
+### Find allowed methods
+`OPTIONS` `*`
