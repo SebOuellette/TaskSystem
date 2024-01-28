@@ -216,15 +216,12 @@ public:
 	Task getTask(Task& t)
 	{
 		Task foundTask;
-		string TaskTable = "Tasks";
-		string PartTable = "Parts";
-		string UserTable = "Users";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		selectQuery << SQL_JOINALL_QUERY << " WHERE Tasks.id == " << to_string(t.id);
 		
-		if (!t.consumedPart.id)
-			return Part();
+		//if (!t.consumedPart.id)
+		//	return Part();
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
@@ -255,20 +252,24 @@ public:
 				else if (strcmp(colNames[row], "userid") == 0) {
 					foundTask->user.id = stoi(argv[row]);
 				}
+				else if (strcmp(colNames[row], "username") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->user.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partname") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->consumedPart.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->consumedPart.serialNumber, argv[row], length);
+				}
 			}
 
 			return 0;
 		}, (void*)&foundTask);
-
-		if(foundTask.id)
-		{
-			cout << "Retrieved a taskId > 0, ";
-			foundTask.consumedPart = this->getPart(foundTask);
-			foundTask.user = this->getUser(foundTask.user.id);
-			return foundTask;
-		}
 		
-		return Task();
+		return foundTask;
 		
 	}
 	//get part names from id
@@ -416,7 +417,7 @@ public:
 		vector<Task> tasks;
 		cout << "searching for key: " << key << ", ";
 		//SELECT ALL DISTINCT 
-		selectQuery << "SELECT Tasks.id,title,description,datecreated,partid,userid,Users.name as username,Parts.name as partname, Parts.serialnumber as serialnumber FROM Tasks INNER JOIN Users ON Users.id = Tasks.userid INNER JOIN Parts ON Parts.id == Tasks.partid WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
+		selectQuery << SQL_JOINALL_QUERY << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 

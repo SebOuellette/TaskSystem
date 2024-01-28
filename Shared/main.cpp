@@ -126,8 +126,24 @@ int main()
 			res.code = 200;
 
 			if (req.method == crow::HTTPMethod::GET) {
+				// Load key querystring
+				crow::query_string keyParam = req.url_params;
+				auto keys = keyParam.keys();
+
+				// Stop and check if a key was provided
+				if (keys.size() <= 0) { // invalid key 
+					res.code = 400;
+					res.end();
+					return;
+				}
+
+				auto keyValue = keyParam.get(string(keys[0]));
+				std::string id = string(keyValue);
+
 				// read database
-				Task existingTask = db.getTask(submitted);
+				Task t;
+				t.id = stoi(id);
+				Task existingTask = db.getTask(t);
 				//format a response
 				crow::json::wvalue jsonTask = buildJsonFromTask(existingTask);
 				cout << "writing response, ";

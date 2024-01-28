@@ -18,6 +18,8 @@
 
 #define TASK_ID_QUERYSTRING "id"
 
+#define SQL_JOINALL_QUERY "SELECT Tasks.id,title,description,datecreated,partid,userid,Users.name as username,Parts.name as partname, Parts.serialnumber as serialnumber FROM Tasks INNER JOIN Users ON Users.id = Tasks.userid INNER JOIN Parts ON Parts.id == Tasks.partid"
+
 //User Defines
 #define USER_NAME_LENGTH 25
 
