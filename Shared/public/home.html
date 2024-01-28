@@ -344,14 +344,14 @@
         {
           searchterm = "";
         }
-        fetch("http://localhost:8080/search?=" + searchterm, {
+        fetch("/search?key=" + searchterm, {
             headers: {'Content-Type': 'application/json'
                     }
           }).then(function (response) {
             return response.json();
           })
           .then(function (apiJsonData) {
-            console.log(apiJsonData);
+            //console.log(apiJsonData);
             renderDataInTheTable(apiJsonData);
           });
       }

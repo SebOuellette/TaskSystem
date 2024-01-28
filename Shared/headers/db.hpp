@@ -118,7 +118,7 @@ public:
 		string insert5 = "INSERT INTO Parts (name, serialnumber) VALUES (\"sensor\", \"BF-df78ss\"); ";
 	
 		string insert6 = "INSERT INTO Users (name) VALUES (\"Zebadiah\"); ";
-		string insert7 = "INSERT INTO Users (name) VALUES (\"Sebastion\"); ";
+		string insert7 = "INSERT INTO Users (name) VALUES (\"Sebastian\"); ";
 		string insert8 = "INSERT INTO Users (name) VALUES (\"Tom\"); ";
 		string insert9 = "INSERT INTO Users (name) VALUES (\"Kiana\"); ";
 
@@ -217,6 +217,8 @@ public:
 	{
 		Task foundTask;
 		string TaskTable = "Tasks";
+		string PartTable = "Parts";
+		string UserTable = "Users";
 
 		stringstream selectQuery;
 		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
@@ -414,7 +416,7 @@ public:
 		vector<Task> tasks;
 		cout << "searching for key: " << key << ", ";
 		//SELECT ALL DISTINCT 
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
+		selectQuery << "SELECT Tasks.id,title,description,datecreated,partid,userid,Users.name as username,Parts.name as partname, Parts.serialnumber as serialnumber FROM Tasks INNER JOIN Users ON Users.id = Tasks.id INNER JOIN Parts ON Parts.id == Tasks.id WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
@@ -446,22 +448,24 @@ public:
 				else if (strcmp(colNames[row], "userid") == 0) {
 					fromDbQuery.user.id = stoi(argv[row]);
 				}
+				else if (strcmp(colNames[row], "username") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.user.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partname") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.consumedPart.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.consumedPart.serialNumber, argv[row], length);
+				}
 			}
 			tasks->push_back(fromDbQuery);
 			return 0;
 		}, (void*)&tasks);
 
 		cout << "Found " << tasks.size() << " matches, ";
-		
-		if(tasks.size() > 0)
-		{
-			cout << "Getting part data, ";
-			for(Task & task : tasks)
-			{
-				task.consumedPart = this->getPart(task);
-				task.user = this->getUser(task.user.id);
-			}
-		}
 		return tasks;
 	}
 	//Update task

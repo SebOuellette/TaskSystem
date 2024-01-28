@@ -255,6 +255,7 @@ crow::json::wvalue buildJsonFromTask(Task& task)
 	jsonTask["datecreated"] = string(task.datecreated);
 	jsonTask["partid"] = to_string(task.consumedPart.id);
 	jsonTask["part"] = string(task.consumedPart.name);
+	jsonTask["serialnumber"] = string(task.consumedPart.serialNumber);
 	jsonTask["assigned"] = to_string(task.user.id);
 	jsonTask["assignedName"] = string(task.user.name);
 
