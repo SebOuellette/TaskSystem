@@ -262,9 +262,9 @@
               style="margin-top: 10px; margin-bottom: 5px" id="assignedlable">Assignee</span>
             <select id="assigned" name="category" aria-placeholder="assigned">
               <option value="1">Zebadiah</option>
-              <option value="2">Tom</option>
-              <option value="3">Kiana</option>
-              <option value="4">Sebastian</option>
+              <option value="2">Sebastian</option>
+              <option value="3">Tom</option>
+              <option value="4">Kiana</option>
               <option value="N/A">N/A</option>
             </select>
           </div>
@@ -300,10 +300,17 @@
 
     <script type="text/javascript" charset="utf-8">
 
+      function putReport(request) {
+        request.method = "PUT";
 
+        fetch(`${window.location.href}add`, request).then(res=> {
+          // Search for our new task
+          PopulateTable(document.getElementById("title").value)
+        })
+      }
 
       function submitReport() {
-        fetch(`${window.location.href}add`, {
+        let request = {
           method: "POST",
           body: JSON.stringify({
             //id: document.getElementById("category").value, // Read the value of the selected element (works)
@@ -318,12 +325,21 @@
           headers: {
             "Content-type": "application/json; charset=UTF-8",
           },
-        }).then(()=>{
+        };
 
-          // Once we add a new task, display data about the task in the table. This lets us know if something already exists as well
+        fetch(`${window.location.href}add`, request).then(res=>{
 
-          // Search for the task we added and display it
-          PopulateTable(document.getElementById("title").value)
+          if (res.status == 409) { // There was a conflict, try patching instead
+            putReport(request);
+          } else {
+            // Once we add a new task, display data about the task in the table. This lets us know if something already exists as well
+            // Search for the task we added and display it
+             PopulateTable(document.getElementById("title").value);
+          }
+          
+        }).catch(err=>{
+          console.error(err);
+          console.log("Something happened");
         });
       }
 

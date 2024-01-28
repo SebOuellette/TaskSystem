@@ -416,7 +416,7 @@ public:
 		vector<Task> tasks;
 		cout << "searching for key: " << key << ", ";
 		//SELECT ALL DISTINCT 
-		selectQuery << "SELECT Tasks.id,title,description,datecreated,partid,userid,Users.name as username,Parts.name as partname, Parts.serialnumber as serialnumber FROM Tasks INNER JOIN Users ON Users.id = Tasks.id INNER JOIN Parts ON Parts.id == Tasks.id WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
+		selectQuery << "SELECT Tasks.id,title,description,datecreated,partid,userid,Users.name as username,Parts.name as partname, Parts.serialnumber as serialnumber FROM Tasks INNER JOIN Users ON Users.id = Tasks.userid INNER JOIN Parts ON Parts.id == Tasks.partid WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
@@ -474,7 +474,17 @@ public:
 		string TaskTable = "Tasks";
 		stringstream updateQuery;
 
-		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << ", userid = " << withNewDetails.user.id << " WHERE id == " << to_string(withNewDetails.id);
+		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << ", userid = " << withNewDetails.user.id << " WHERE ";
+		if (withNewDetails.id == -1) {
+			// Sometimes, the id is unknown (when adding a new record)
+			// In this case, records are identified using userid and partid. 
+			 // In an event where the task iD is unknown, the user must know the unique combination of userid and partid. This is used when adding a new task, for example
+			updateQuery <<"userid == " << to_string(withNewDetails.user.id) << " AND partid == " << to_string(withNewDetails.consumedPart.id);
+		} else {
+			// When we know the task ID, we can simply query for ID, saving performance
+			updateQuery << "id == " << std::to_string(withNewDetails.id);
+		}
+
 		cout << "running update query";
 		cout << updateQuery.str();
 		if(this->run(updateQuery.str()))

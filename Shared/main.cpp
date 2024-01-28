@@ -76,6 +76,11 @@ int main()
 				vector<Task> filteredTasks;
 				crow::query_string keyParam = req.url_params;
 				auto keys = keyParam.keys();
+				if (keys.size() <= 0) { // invalid key 
+					res.code = 400;
+					res.end();
+					return;
+				}
 				auto keyValue = keyParam.get(string(keys[0]));
 				string searchKey = string(keyValue);
 				filteredTasks =  db.getFilteredTasks(searchKey);
@@ -100,6 +105,17 @@ int main()
 			res.write(jsonResponse.dump());
 			res.end();
 		});
+
+	CROW_ROUTE(app, "/editor") //  page
+	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
+        ([&db](const crow::request& req, crow::response& res){
+			// Redirect to the editor page
+            res.code = 200;
+
+			res.write(loadFile(res, "", "editor.html"));
+
+            res.end();
+        });
 
 	CROW_ROUTE(app, "/edit") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
@@ -209,6 +225,14 @@ int main()
 			// Load key querystring
 			crow::query_string keyParam = req.url_params;
             auto keys = keyParam.keys();
+
+			// Stop and check if a key was provided
+			if (keys.size() <= 0) { // invalid key 
+				res.code = 400;
+				res.end();
+				return;
+			}
+
             auto keyValue = keyParam.get(string(keys[0]));
             std::string id = string(keyValue);
 

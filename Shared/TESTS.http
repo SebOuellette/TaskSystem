@@ -1,9 +1,8 @@
-### Search for all tasks
+### Invalid search does not cause segmentation fault
 http://localhost:8080/search
 
-{
-    "key": ""
-}
+### Search for all tasks
+http://localhost:8080/search?key=
 
 ### Search for test task
 http://localhost:8080/search
