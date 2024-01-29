@@ -110,19 +110,21 @@ public:
 
 	void seedData()
 	{
+		// INSERT INTO Users (name) SELECT "Jon" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = "Jon")
 		stringstream seed;
-		string insert1 = "INSERT INTO Parts (name, serialnumber) VALUES (\"relay\", \"jl8d8890\"); ";
-		string insert2 = "INSERT INTO Parts (name, serialnumber) VALUES (\"seal\", \"jzj000500\"); ";
-		string insert3 = "INSERT INTO Parts (name, serialnumber) VALUES (\"pump\", \"KY-34jjk\"); ";
-		string insert4 = "INSERT INTO Parts (name, serialnumber) VALUES (\"scanner\", \"SR-1500\"); ";
-		string insert5 = "INSERT INTO Parts (name, serialnumber) VALUES (\"sensor\", \"BF-df78ss\"); ";
+		string insert1 = "INSERT INTO Parts (name, serialnumber) SELECT \"relay\", \"jl8d8890\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"jl8d8890\");";
+		string insert2 = "INSERT INTO Parts (name, serialnumber) SELECT \"seal\", \"jzj000500\"  WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"jzj000500\");";
+		string insert3 = "INSERT INTO Parts (name, serialnumber) SELECT \"pump\", \"KY-34jjk\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"KY-34jjk\");";
+		string insert4 = "INSERT INTO Parts (name, serialnumber) SELECT \"scanner\", \"SR-1500\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"SR-1500\");";
+		string insert5 = "INSERT INTO Parts (name, serialnumber) SELECT \"sensor\", \"BF-df78ss\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"BF-df78ss\");";
 	
-		string insert6 = "INSERT INTO Users (name) VALUES (\"Zebadiah\"); ";
-		string insert7 = "INSERT INTO Users (name) VALUES (\"Sebastian\"); ";
-		string insert8 = "INSERT INTO Users (name) VALUES (\"Tom\"); ";
-		string insert9 = "INSERT INTO Users (name) VALUES (\"Kiana\"); ";
+		string insert6 = "INSERT INTO Users (id, name) SELECT 1, \"Zebadiah\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Zebadiah\");";
+		string insert7 = "INSERT INTO Users (id, name) SELECT 2, \"Sebastian\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Sebastian\");";
+		string insert8 = "INSERT INTO Users (id, name) SELECT 3, \"Tom\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Tom\");";
+		string insert9 = "INSERT INTO Users (id, name) SELECT 4, \"Kiana\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Kiana\");";
+		string insert10 = "INSERT INTO Users (id, name) SELECT 5, \"Coleshill\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Coleshill\");";
 
-		string insert10 = "INSERT INTO Tasks (title, description, datecreated, partid, userid) VALUES (\"seed task\", \"seed description\", \"2024-01-18\", 1, 1); ";
+		//string insert10 = "INSERT INTO Tasks (title, description, datecreated, partid, userid) SELECT \"seed task\", \"seed description\", \"2024-01-18\", 1, 1 WHERE NOT EXISTS (SELECT 1 FROM Tasks WHERE title = \"seed task\");";
 
 		seed << insert1 << insert2 << insert3 << insert4 << insert5 << insert6 << insert7 << insert8 << insert9 << insert10;
 		this->run(seed.str());
@@ -378,7 +380,7 @@ public:
 		return foundUser;
 	}
 
-	vector<User> getAllUsers(int id)
+	vector<User> getAllUsers()
 	{
 		vector<User> foundUsers;
 		string UsersTable = "Users";
@@ -390,9 +392,11 @@ public:
 
 			vector<User>* foundUsers = (vector<User>*)data;
 
+			User entry;
+
 			for(int row = 0; row < argc; row++)
 			{
-				User entry;
+				
 				if (strcmp(colNames[row], "id") == 0) {
 					entry.id = stoi(argv[row]);
 				}
@@ -400,8 +404,10 @@ public:
 					int length = strlen(argv[row]) + 1;
 					strncpy(entry.name, argv[row], length);
 				}
-				foundUsers->push_back(entry);
+				
 			}
+
+			foundUsers->push_back(entry);
 			return 0;
 		}, (void*)&foundUsers);
 		return foundUsers;

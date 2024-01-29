@@ -15,6 +15,7 @@
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
 std::string replaceParts(TaskDb& db, std::string);
+std::string replaceUsers(TaskDb& db, std::string);
 bool isAuthorized(ID userID, const crow::request& req);
 Task buildTaskFromJson(string reqBody);
 crow::json::wvalue buildJsonFromTask(Task& task);
@@ -40,6 +41,7 @@ int main()
 			std::string home = loadFile(res, "", "home.html");
 
 			home = replaceParts(db, home);
+			home = replaceUsers(db, home);
 		
 			res.write(home);
 
@@ -107,6 +109,7 @@ int main()
 			std::string editor = loadFile(res, "", "editor.html");
 
 			editor = replaceParts(db, editor);
+			editor = replaceUsers(db, editor);
 
 			res.write(editor);
 
@@ -431,6 +434,22 @@ std::string replaceParts(TaskDb& db, std::string html) {
 		result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << " | " << parts[i].serialNumber << "</option>" << PART_TEMPLATE;
 		// replace the template with our new html element
 		html = replaceTemplates(html, PART_TEMPLATE, result.str());
+	}
+
+	return html;
+}
+
+std::string replaceUsers(TaskDb& db, std::string html) {
+	// Get a current list of parts at the time of request
+	std::vector<User> users = db.getAllUsers();
+	
+	// // Add all parts to the part dropdown
+	for (int i=0;i<users.size();i++) {
+		std::stringstream result;
+		// Build new option, append template at the end to allow for another loop
+		result << "<option value=\"" << users[i].id << "\">" << users[i].name << "</option>" << USER_TEMPLATE;
+		// replace the template with our new html element
+		html = replaceTemplates(html, USER_TEMPLATE, result.str());
 	}
 
 	return html;

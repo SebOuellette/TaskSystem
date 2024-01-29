@@ -54,7 +54,7 @@ To use the compiled executable, simply start it using the following comamnd `/Sh
 
 ### Edit specific task
 `PATCH` `/edit`<br>
-Request body format: `application/json`
+Request body format: `application/json`<br>
 ```json
 {
     "id": <task_id> // required field
@@ -63,8 +63,8 @@ Request body format: `application/json`
 **Result:** `N/A`
 
 ### Add new task
-`POST` `/add`
-Request body format: `application.json`
+`POST` `/add`<br>
+Request body format: `application.json`<br>
 ```json
 {
     "title": "<task_title>", // required
@@ -73,11 +73,12 @@ Request body format: `application.json`
     "assigned": <assigned_user_id>, // required
 }
 ```
+**Result:** `N/A`<br?
 If a task with this partid and assigned user id already exists, status code `409 Conflict` will be returned. When this result is given, the client must instead perform a PUT request to /add to replace the existing task.
 
 ### Replace existing task
-`PUT` `/add`
-Request body format: `application.json`
+`PUT` `/add`<br>
+Request body format: `application.json`<br>
 ```json
 {
     "title": "<task_title>", // required
@@ -86,6 +87,7 @@ Request body format: `application.json`
     "assigned": <assigned_user_id>, // required
 }
 ```
+**Result:** `N/A`
 
 ### Delete specific task
 `GET` `/delete`<br>
