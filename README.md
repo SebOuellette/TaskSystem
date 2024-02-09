@@ -73,7 +73,7 @@ Request body format: `application.json`<br>
     "assigned": <assigned_user_id>, // required
 }
 ```
-**Result:** `N/A`<br?
+**Result:** `N/A`<br>
 If a task with this partid and assigned user id already exists, status code `409 Conflict` will be returned. When this result is given, the client must instead perform a PUT request to /add to replace the existing task.
 
 ### Replace existing task

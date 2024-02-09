@@ -13,3 +13,16 @@ http://localhost:8080/edit?id=45
 ### Test Delete
 ### Assumes task id 46 exists, search for tasks first and choose an id to test
 DELETE http://localhost:8080/delete?id=46
+
+### test add route
+POST http://localhost:8080/add
+
+{
+    "partid": 3282,
+    "part": "testpart",
+    "assigned": 3,
+    "assignedName": "Sebastian",
+    "title": "Test task title",
+    "description": "Test task description"
+}
+

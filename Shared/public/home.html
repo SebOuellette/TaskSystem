@@ -352,18 +352,6 @@
       
       function PopulateTable(searchterm)
       {
-<<<<<<< HEAD
-        fetch("https://localhost/search?key=", {
-          method: 'GET',
-        })
-        .then(function (response) {
-          return response.json();
-        })
-        .then(function (apiJsonData) {
-          console.log(apiJsonData);
-          renderDataInTheTable(apiJsonData);
-        });
-=======
 
         if(searchterm == null)
         {
@@ -394,7 +382,6 @@
         }
 
         PopulateTable(filter.value);
->>>>>>> a8e032433c2b7d8056ce359bb9960253747a8577
       }
 
       var count = 1;

@@ -15,7 +15,7 @@ typedef struct _Part {
 	enum COLUMNS { IDCOL, NAME, SERIALNUMBER };
 	std::chrono::system_clock::time_point timeAdded;
 
-	_Part() : timeAdded(std::chrono::system_clock::now()), id(0) {}
+	_Part() : timeAdded(std::chrono::system_clock::now()), id(-1) {}
 
 	_Part& operator=(const _Part& other)
 	{
