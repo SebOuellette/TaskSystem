@@ -353,7 +353,9 @@
       
       function PopulateTable()
       {
-        fetch("https://jsonplaceholder.typicode.com/todos")
+        fetch("https://localhost/search?key=", {
+          method: 'GET',
+        })
         .then(function (response) {
           return response.json();
         })

@@ -2,7 +2,7 @@
 docker run --rm -ti -p 8080:8080 -v %cd%\Shared:/Shared --name tasksystem sebouellette/webserver:shoppingcart /Shared/build/tasksystem
 
 // To just load bash so you can compile
-docker run --rm -ti -p 8080:8080 -v %cd%\Shared:/Shared --name tasksystem sebouellette/webserver:shoppingcart bash
+docker run --rm -ti -p 8080:8080 -v "C:\Users\Tom Troczynski\Desktop\TaskSystem\Shared":/Shared --name tasksystem sebouellette/webserver:shoppingcart bash
 
 // To Run in bash
 docker run --rm -ti -p 8080:8080 -v "$(pwd)/Shared:/Shared" --name tasksystem sebouellette/webserver:shoppingcart /Shared/build/tasksystem
