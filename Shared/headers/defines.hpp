@@ -16,6 +16,10 @@
 #define PART_SERIAL_LENGTH 50
 #define PART_DISPLAY_LIMIT 500
 
+#define TASK_ID_QUERYSTRING "id"
+
+#define SQL_JOINALL_QUERY "SELECT Tasks.id,title,description,datecreated,partid,userid,Users.name as username,Parts.name as partname, Parts.serialnumber as serialnumber FROM Tasks INNER JOIN Users ON Users.id = Tasks.userid INNER JOIN Parts ON Parts.id == Tasks.partid"
+
 //User Defines
 #define USER_NAME_LENGTH 25
 
@@ -25,6 +29,7 @@ typedef int ID;
 // HTML templates. Used for adding dynamically generated content to the html pages from server-side
 #define TASK_TEMPLATE "<!--[[NEXT-TASK-ITEM]]-->"
 #define PART_TEMPLATE "<!--[[PARTS_LIST]]-->"
+#define USER_TEMPLATE "<!--[[USER_LIST]]-->"
 #define HOME_LINK_TEMPLATE "[[HOME_LINK]]"
 
 

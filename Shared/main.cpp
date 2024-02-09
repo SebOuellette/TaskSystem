@@ -9,23 +9,28 @@
 #include <string>
 #include <random>
 #include <ctime>
-#include "headers/crow_all.h"
+
 
 // Function Definitions
 std::string loadFile(crow::response& res, std::string _folder, std::string _name);
 std::string replaceTemplates(std::string htmlString, const char templateStr[], std::string replacement);
+std::string replaceParts(TaskDb& db, std::string);
+std::string replaceUsers(TaskDb& db, std::string);
 bool isAuthorized(ID userID, const crow::request& req);
 Task buildTaskFromJson(string reqBody);
 crow::json::wvalue buildJsonFromTask(Task& task);
+crow::json::wvalue buildJsonFromPart(Part& part);
+
 
 // Main Function
 int main()
 {
 	srand(time(NULL));
 
-	crow::SimpleApp app;
+	crow::App<crow::CORSHandler> app;
 	// Create and initialize the database
 	TaskDb db;
+	
 
 	CROW_ROUTE(app, "/") // Index page
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
@@ -35,17 +40,8 @@ int main()
 
 			std::string home = loadFile(res, "", "home.html");
 
-			// Get a current list of parts at the time of request
-			std::vector<Part> parts = db.getParts();
-			
-			// // Add all parts to the part dropdown
-			for (int i=0;i<parts.size();i++) {
-				std::stringstream result;
-				// Build new option, append template at the end to allow for another loop
-				result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << " | " << parts[i].serialNumber << "</option>" << PART_TEMPLATE;
-				// replace the template with our new html element
-				home = replaceTemplates(home, PART_TEMPLATE, result.str());
-			}
+			home = replaceParts(db, home);
+			home = replaceUsers(db, home);
 		
 			res.write(home);
 
@@ -67,8 +63,8 @@ int main()
 	CROW_ROUTE(app, "/search") // Get a current task list by key in json body
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
         ([&db](const crow::request& req, crow::response& res){
-		
 			crow::json::wvalue jsonResponse;
+<<<<<<< HEAD
 			const crow::json::rvalue& parsed = crow::json::load(req.body);
 			vector<Task> filteredTasks;
 
@@ -79,20 +75,59 @@ int main()
 
 			cout << searchKey << std::endl;
 			filteredTasks =  db.getFilteredTasks(searchKey);
+=======
+			if (req.method == crow::HTTPMethod::GET) {
+				
+				const crow::json::rvalue& parsed = crow::json::load(req.body);
+				vector<Task> filteredTasks;
+				crow::query_string keyParam = req.url_params;
+				auto keys = keyParam.keys();
+				if (keys.size() <= 0) { // invalid key 
+					res.code = 400;
+					res.end();
+					return;
+				}
+				auto keyValue = keyParam.get(string(keys[0]));
+				string searchKey = string(keyValue);
+				filteredTasks =  db.getFilteredTasks(searchKey);
 
-			vector<crow::json::wvalue> jsonFilteredTasks;
+				vector<crow::json::wvalue> jsonFilteredTasks;
+>>>>>>> a8e032433c2b7d8056ce359bb9960253747a8577
 
-			for(int i = 0; i < filteredTasks.size(); i++)
-			{
-				crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
-				jsonFilteredTasks.push_back(jsonTask);
+				for(int i = 0; i < filteredTasks.size(); i++)
+				{
+					crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
+					jsonFilteredTasks.push_back(jsonTask);
+				}
+				jsonResponse = std::move(jsonFilteredTasks);
+
 			}
+			
 			cout << "writing response, ";
-			jsonResponse = std::move(jsonFilteredTasks);
+			
+			res.set_header("Access-Control-Allow-Origin", "127.0.0.1:8080");
+			res.add_header("Content-Type", "application/json");
+
 			res.code = 200;
 			res.write(jsonResponse.dump());
 			res.end();
 		});
+
+	CROW_ROUTE(app, "/editor") //  page
+	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
+        ([&db](const crow::request& req, crow::response& res){
+			// Redirect to the editor page
+            res.code = 200;
+
+			std::string editor = loadFile(res, "", "editor.html");
+
+			editor = replaceParts(db, editor);
+			editor = replaceUsers(db, editor);
+
+			res.write(editor);
+
+            res.end();
+        });
 
 	CROW_ROUTE(app, "/edit") // Get a current task by id
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET, crow::HTTPMethod::PATCH)
@@ -102,8 +137,24 @@ int main()
 			res.code = 200;
 
 			if (req.method == crow::HTTPMethod::GET) {
+				// Load key querystring
+				crow::query_string keyParam = req.url_params;
+				auto keys = keyParam.keys();
+
+				// Stop and check if a key was provided
+				if (keys.size() <= 0) { // invalid key 
+					res.code = 400;
+					res.end();
+					return;
+				}
+
+				auto keyValue = keyParam.get(string(keys[0]));
+				std::string id = string(keyValue);
+
 				// read database
-				Task existingTask = db.getTask(submitted);
+				Task t;
+				t.id = stoi(id);
+				Task existingTask = db.getTask(t);
 				//format a response
 				crow::json::wvalue jsonTask = buildJsonFromTask(existingTask);
 				cout << "writing response, ";
@@ -116,11 +167,11 @@ int main()
 				if(exists)
 				{
 					bool updatStatus = db.updateTask(submitted);
-					if(!updatStatus)
-						res.code = 409;
+					if(updatStatus) // 1 = error
+						res.code = 500; // Server error
 				}
 				else
-					res.code = 409;			
+					res.code = 404;	// Missing	
 			}
 			
 			res.end();
@@ -196,14 +247,24 @@ int main()
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::DELETE)
         ([&db](const crow::request& req, crow::response& res){
 
-			// Load JSON body
-			const crow::json::rvalue& parsed = crow::json::load(req.body);
+			// Load key querystring
+			crow::query_string keyParam = req.url_params;
+            auto keys = keyParam.keys();
 
-			int id = parsed["id"].i();
+			// Stop and check if a key was provided
+			if (keys.size() <= 0) { // invalid key 
+				res.code = 400;
+				res.end();
+				return;
+			}
 
+            auto keyValue = keyParam.get(string(keys[0]));
+            std::string id = string(keyValue);
 
 			// Delete task if exists in database
-			bool deleteRes = db.deleteTask(std::to_string(id));
+			bool deleteRes = db.deleteTask(id);
+
+			std::cout << "Response: " << deleteRes << std::endl;
 
 			// Check if the query was successful
 			if (deleteRes == false) { // no error
@@ -215,9 +276,6 @@ int main()
 			res.end();
 
 		});
-
-
-
 	// OPTIONS /
 	// GET /edit/<int>
 	// PATCH /edit/<int>
@@ -229,7 +287,14 @@ int main()
 	app.port(8080).multithreaded().run();
 	return 1;
 }
+crow::json::wvalue buildJsonFromPart(Part& part)
+{
+	crow::json::wvalue jsonPart;
+	jsonPart["partid"] = to_string(part.id);
+	jsonPart["name"] = string(part.name);
 
+	return jsonPart;
+}
 crow::json::wvalue buildJsonFromTask(Task& task)
 {
 	crow::json::wvalue jsonTask;
@@ -239,6 +304,7 @@ crow::json::wvalue buildJsonFromTask(Task& task)
 	jsonTask["datecreated"] = string(task.datecreated);
 	jsonTask["partid"] = to_string(task.consumedPart.id);
 	jsonTask["part"] = string(task.consumedPart.name);
+	jsonTask["serialnumber"] = string(task.consumedPart.serialNumber);
 	jsonTask["assigned"] = to_string(task.user.id);
 	jsonTask["assignedName"] = string(task.user.name);
 
@@ -366,6 +432,38 @@ std::string replaceTemplates(std::string htmlString, const char templateStr[], s
 	result << before << replacement << after;
 
 	return result.str();
+}
+
+std::string replaceParts(TaskDb& db, std::string html) {
+	// Get a current list of parts at the time of request
+	std::vector<Part> parts = db.getParts();
+	
+	// // Add all parts to the part dropdown
+	for (int i=0;i<parts.size();i++) {
+		std::stringstream result;
+		// Build new option, append template at the end to allow for another loop
+		result << "<option value=\"" << parts[i].id << "\">" << parts[i].name << " | " << parts[i].serialNumber << "</option>" << PART_TEMPLATE;
+		// replace the template with our new html element
+		html = replaceTemplates(html, PART_TEMPLATE, result.str());
+	}
+
+	return html;
+}
+
+std::string replaceUsers(TaskDb& db, std::string html) {
+	// Get a current list of parts at the time of request
+	std::vector<User> users = db.getAllUsers();
+	
+	// // Add all parts to the part dropdown
+	for (int i=0;i<users.size();i++) {
+		std::stringstream result;
+		// Build new option, append template at the end to allow for another loop
+		result << "<option value=\"" << users[i].id << "\">" << users[i].name << "</option>" << USER_TEMPLATE;
+		// replace the template with our new html element
+		html = replaceTemplates(html, USER_TEMPLATE, result.str());
+	}
+
+	return html;
 }
 
 // Check if a request is authorized to access page for some userID.

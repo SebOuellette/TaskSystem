@@ -250,9 +250,7 @@
             <div class="row">
               <span style="margin-bottom: 5px" id="categorylable">Category</span>
               <select id="category" name="category">
-                <option value="category1">Category 1</option>
-                <option value="category2">Category 2</option>
-                <option value="category3">Category 3</option>
+                <!--[[PARTS_LIST]]-->
               </select>
               <span
                 style="margin-top: 10px; margin-bottom: 5px"
@@ -260,11 +258,8 @@
                 >Assignee</span
               >
               <select id="assigned" name="category" aria-placeholder="assigned">
-                <option value="category1">Zebadiah</option>
-                <option value="category2">Tom</option>
-                <option value="category3">Kiana</option>
-                <option value="category4">Sebastion</option>
-                <option value="category5">N/A</option>
+                <!--[[USER_LIST]]-->
+                <option value="N/A">N/A</option>
               </select>
             </div>
             <div class="row">
@@ -274,30 +269,47 @@
         </div>
       </div> 
       <script type="text/javascript" charset="utf-8">
+        const urlParams = new URLSearchParams(window.location.search);
+        const taskid = urlParams.get("id");
+        console.log(`Id is ${taskid}`);
+
         function submitReport() {
-          fetch("https://jsonplaceholder.typicode.com/todos", {
-            method: "POST",
+          fetch("/edit", {
+            method: "PATCH",
             body: JSON.stringify({
-              title: document.getElementById("title").innerText,
-              Description: document.getElementById("description").innerText,
-              Category: document.getElementById("category").innerText,
-              Assigned: document.getElementById("assigned").innerText,
-              value: document.getElementById("value").innerText,
+              taskid: taskid,
+              part: document.getElementById("category").options[document.getElementById("category").options.selectedIndex].innerText,
+              partid: document.getElementById("category").value,
+              title: document.getElementById("title").value,
+              description: document.getElementById("description").value,
+              assigned: document.getElementById("assigned").value,
+              assignedName: document.getElementById("assigned").options[document.getElementById("assigned").options.selectedIndex].innerText
             }),
             headers: {
               "Content-type": "application/json; charset=UTF-8",
-            },
+            }
+          }).then(() => {
+            // Redirect back to home page
+            document.location.href = "/";
           });
         }
-  
-        fetch("https://jsonplaceholder.typicode.com/todos")
+
+        fetch(`/edit?id=${taskid}`)
           .then(function (response) {
             return response.json();
-          })
-          .then(function (apiJsonData) {
-            console.log(apiJsonData);
-            renderDataInTheTable(apiJsonData);
-          });
+          }).then(json => renderDataInTheTable(json));
+        
+        function renderDataInTheTable(data) {
+          if (!data) return; // No data given
+
+          console.log(data);
+
+          document.getElementById("category").selectedIndex = Array.from(document.getElementById("category").options).findIndex(e=>data.partid==e.value);
+          document.getElementById("assigned").selectedIndex = Array.from(document.getElementById("assigned").options).findIndex(e=>data.assigned==e.value);
+
+          document.getElementById("title").value = data.title;
+          document.getElementById("description").value = data.description;
+        }
   
       </script>   
   </body>

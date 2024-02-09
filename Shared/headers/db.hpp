@@ -20,7 +20,7 @@
 // Using sqlite https://www.geeksforgeeks.org/sql-using-c-c-and-sqlite/
 
 // debug
-#define LOG_SUCCESSFUL_QUERIES
+//#define LOG_SUCCESSFUL_QUERIES
 
 using namespace std;
 
@@ -66,7 +66,7 @@ public:
 		if (exRet != SQLITE_OK) {
 			std::cerr << "Error performing query: " << errorMsg << ". Retcode: " << to_string(exRet) << std::endl;
 			sqlite3_free(errorMsg);
-			return SQLITE_ERROR;
+			return 1; // true indicates error
 		}
 #ifdef LOG_SUCCESSFUL_QUERIES
 		else {
@@ -75,7 +75,7 @@ public:
 #endif
 
 		// Returns the exit status. AKA the status of the last query
-		return (exRet == SQLITE_OK);
+		return exRet != SQLITE_OK; // return 0 if all good, 1 if not good;
 	};
 
 	// Initialize the database table
@@ -110,19 +110,21 @@ public:
 
 	void seedData()
 	{
+		// INSERT INTO Users (name) SELECT "Jon" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = "Jon")
 		stringstream seed;
-		string insert1 = "INSERT INTO Parts (name, serialnumber) VALUES (\"relay\", \"jl8d8890\"); ";
-		string insert2 = "INSERT INTO Parts (name, serialnumber) VALUES (\"seal\", \"jzj000500\"); ";
-		string insert3 = "INSERT INTO Parts (name, serialnumber) VALUES (\"pump\", \"KY-34jjk\"); ";
-		string insert4 = "INSERT INTO Parts (name, serialnumber) VALUES (\"scanner\", \"SR-1500\"); ";
-		string insert5 = "INSERT INTO Parts (name, serialnumber) VALUES (\"sensor\", \"BF-df78ss\"); ";
+		string insert1 = "INSERT INTO Parts (name, serialnumber) SELECT \"relay\", \"jl8d8890\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"jl8d8890\");";
+		string insert2 = "INSERT INTO Parts (name, serialnumber) SELECT \"seal\", \"jzj000500\"  WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"jzj000500\");";
+		string insert3 = "INSERT INTO Parts (name, serialnumber) SELECT \"pump\", \"KY-34jjk\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"KY-34jjk\");";
+		string insert4 = "INSERT INTO Parts (name, serialnumber) SELECT \"scanner\", \"SR-1500\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"SR-1500\");";
+		string insert5 = "INSERT INTO Parts (name, serialnumber) SELECT \"sensor\", \"BF-df78ss\" WHERE NOT EXISTS (SELECT 1 FROM Parts WHERE serialnumber = \"BF-df78ss\");";
 	
-		string insert6 = "INSERT INTO Users (name) VALUES (\"Zebadiah\"); ";
-		string insert7 = "INSERT INTO Users (name) VALUES (\"Sebastion\"); ";
-		string insert8 = "INSERT INTO Users (name) VALUES (\"Tom\"); ";
-		string insert9 = "INSERT INTO Users (name) VALUES (\"Kiana\"); ";
+		string insert6 = "INSERT INTO Users (id, name) SELECT 1, \"Zebadiah\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Zebadiah\");";
+		string insert7 = "INSERT INTO Users (id, name) SELECT 2, \"Sebastian\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Sebastian\");";
+		string insert8 = "INSERT INTO Users (id, name) SELECT 3, \"Tom\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Tom\");";
+		string insert9 = "INSERT INTO Users (id, name) SELECT 4, \"Kiana\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Kiana\");";
+		string insert10 = "INSERT INTO Users (id, name) SELECT 5, \"Coleshill\" WHERE NOT EXISTS (SELECT 1 FROM Users WHERE name = \"Coleshill\");";
 
-		string insert10 = "INSERT INTO Tasks (title, description, datecreated, partid, userid) VALUES (\"seed task\", \"seed description\", \"2024-01-18\", 1, 1); ";
+		//string insert10 = "INSERT INTO Tasks (title, description, datecreated, partid, userid) SELECT \"seed task\", \"seed description\", \"2024-01-18\", 1, 1 WHERE NOT EXISTS (SELECT 1 FROM Tasks WHERE title = \"seed task\");";
 
 		seed << insert1 << insert2 << insert3 << insert4 << insert5 << insert6 << insert7 << insert8 << insert9 << insert10;
 		this->run(seed.str());
@@ -216,13 +218,12 @@ public:
 	Task getTask(Task& t)
 	{
 		Task foundTask;
-		string TaskTable = "Tasks";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< TaskTable <<" WHERE id == " << to_string(t.id);
+		selectQuery << SQL_JOINALL_QUERY << " WHERE Tasks.id == " << to_string(t.id);
 		
-		if (!t.consumedPart.id)
-			return Part();
+		//if (!t.consumedPart.id)
+		//	return Part();
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
@@ -253,20 +254,24 @@ public:
 				else if (strcmp(colNames[row], "userid") == 0) {
 					foundTask->user.id = stoi(argv[row]);
 				}
+				else if (strcmp(colNames[row], "username") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->user.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partname") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->consumedPart.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(foundTask->consumedPart.serialNumber, argv[row], length);
+				}
 			}
 
 			return 0;
 		}, (void*)&foundTask);
-
-		if(foundTask.id)
-		{
-			cout << "Retrieved a taskId > 0, ";
-			foundTask.consumedPart = this->getPart(foundTask);
-			foundTask.user = this->getUser(foundTask.user.id);
-			return foundTask;
-		}
 		
-		return Task();
+		return foundTask;
 		
 	}
 	//get part names from id
@@ -309,16 +314,13 @@ public:
 	}
 
 		//get part names from id
-	vector<Part> getAllParts(Task& t)
+	vector<Part> getAllParts()
 	{
 		vector<Part> allParts;
 		string PartTable = "Parts";
 
 		stringstream selectQuery;
-		selectQuery << "SELECT 1 FROM "<< PartTable <<" WHERE id == " << to_string(t.consumedPart.id);
-		
-		if (!t.consumedPart.id)
-			return vector<Part>();
+		selectQuery << "SELECT * FROM "<< PartTable;
 
 		cout << "Running query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
@@ -378,7 +380,7 @@ public:
 		return foundUser;
 	}
 
-	vector<User> getAllUsers(int id)
+	vector<User> getAllUsers()
 	{
 		vector<User> foundUsers;
 		string UsersTable = "Users";
@@ -390,9 +392,11 @@ public:
 
 			vector<User>* foundUsers = (vector<User>*)data;
 
+			User entry;
+
 			for(int row = 0; row < argc; row++)
 			{
-				User entry;
+				
 				if (strcmp(colNames[row], "id") == 0) {
 					entry.id = stoi(argv[row]);
 				}
@@ -400,8 +404,10 @@ public:
 					int length = strlen(argv[row]) + 1;
 					strncpy(entry.name, argv[row], length);
 				}
-				foundUsers->push_back(entry);
+				
 			}
+
+			foundUsers->push_back(entry);
 			return 0;
 		}, (void*)&foundUsers);
 		return foundUsers;
@@ -417,12 +423,11 @@ public:
 		vector<Task> tasks;
 		cout << "searching for key: " << key << ", ";
 		//SELECT ALL DISTINCT 
-		selectQuery << "SELECT * FROM " << TaskTable << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
+		selectQuery << SQL_JOINALL_QUERY << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
 			vector<Task>* tasks = (vector<Task>*)data;
-			cout << "Entered getFilteredTasks lambda, ";
 			Task fromDbQuery;
 
 			for(int row = 0; row < argc; row++)
@@ -449,22 +454,24 @@ public:
 				else if (strcmp(colNames[row], "userid") == 0) {
 					fromDbQuery.user.id = stoi(argv[row]);
 				}
+				else if (strcmp(colNames[row], "username") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.user.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "partname") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.consumedPart.name, argv[row], length);
+				}
+				else if (strcmp(colNames[row], "serialnumber") == 0) {
+					int length = strlen(argv[row]) + 1;
+					strncpy(fromDbQuery.consumedPart.serialNumber, argv[row], length);
+				}
 			}
 			tasks->push_back(fromDbQuery);
 			return 0;
 		}, (void*)&tasks);
 
 		cout << "Found " << tasks.size() << " matches, ";
-		
-		if(tasks.size() > 0)
-		{
-			cout << "Getting part data, ";
-			for(Task & task : tasks)
-			{
-				task.consumedPart = this->getPart(task);
-				task.user = this->getUser(task.user.id);
-			}
-		}
 		return tasks;
 	}
 	//Update task
@@ -473,7 +480,17 @@ public:
 		string TaskTable = "Tasks";
 		stringstream updateQuery;
 
-		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << ", userid = " << withNewDetails.user.id << " WHERE id == " << to_string(withNewDetails.id);
+		updateQuery << "UPDATE " << TaskTable << " SET title = \"" << string(withNewDetails.title) << "\", description = \"" << string(withNewDetails.description) << "\", partid = " << to_string(withNewDetails.consumedPart.id) << ", userid = " << withNewDetails.user.id << " WHERE ";
+		if (withNewDetails.id == -1) {
+			// Sometimes, the id is unknown (when adding a new record)
+			// In this case, records are identified using userid and partid. 
+			 // In an event where the task iD is unknown, the user must know the unique combination of userid and partid. This is used when adding a new task, for example
+			updateQuery <<"userid == " << to_string(withNewDetails.user.id) << " AND partid == " << to_string(withNewDetails.consumedPart.id);
+		} else {
+			// When we know the task ID, we can simply query for ID, saving performance
+			updateQuery << "id == " << std::to_string(withNewDetails.id);
+		}
+
 		cout << "running update query";
 		cout << updateQuery.str();
 		if(this->run(updateQuery.str()))
@@ -489,7 +506,7 @@ public:
 
 		if(!id.empty())
 		{
-			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id == " << id;
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id=\"" << id << "\"";
 			cout << "Running query: " << deleteQuery.str() << std::endl;
 			if(this->run(deleteQuery.str()))
 				return true;
