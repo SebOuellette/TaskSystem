@@ -369,7 +369,7 @@ Task buildTaskFromJson(string reqBody)
 	catch(...)
 	{
 		std::cerr <<"could not find task id in req body\n";
-		t.id = 0;
+		t.id = -1;
 	}
 	try
 	{
