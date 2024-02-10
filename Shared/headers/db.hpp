@@ -501,12 +501,32 @@ public:
 	//Delete a task
 	bool deleteTask(string id)
 	{
+
 		stringstream deleteQuery;
 		string TaskTable = "Tasks";
 
 		if(!id.empty())
 		{
 			deleteQuery << "DELETE FROM " << TaskTable << " WHERE id=\"" << id << "\"";
+
+			cout << "Running query: " << deleteQuery.str() << std::endl;
+			if(this->run(deleteQuery.str()))
+				return true;
+		}
+		return false;
+	}
+
+	//Delete a task
+	bool deleteTask(string uid, string pid)
+	{
+
+		stringstream deleteQuery;
+		string TaskTable = "Tasks";
+
+		if(!uid.empty() && !pid.empty())
+		{
+			deleteQuery << "DELETE FROM " << TaskTable << " WHERE userid=\"" << uid << "\" AND partid=\"" << pid << "\"";
+
 			cout << "Running query: " << deleteQuery.str() << std::endl;
 			if(this->run(deleteQuery.str()))
 				return true;

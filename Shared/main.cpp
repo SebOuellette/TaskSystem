@@ -125,18 +125,20 @@ int main()
 
 			if (req.method == crow::HTTPMethod::GET) {
 				// Load key querystring
-				crow::query_string keyParam = req.url_params;
-				auto keys = keyParam.keys();
+				//crow::query_string keyParam = req.url_params.get("id");
+				//auto keys = keyParam.keys();
+
+				std::string key = req.url_params.get("id");
 
 				// Stop and check if a key was provided
-				if (keys.size() <= 0) { // invalid key 
+				if (key.length() <= 0) { // invalid key 
 					res.code = 400;
 					res.end();
 					return;
 				}
 
-				auto keyValue = keyParam.get(string(keys[0]));
-				std::string id = string(keyValue);
+				//auto keyValue = keyParam.get(string(keys[0]));
+				std::string id = key;
 
 				// read database
 				Task t;
@@ -238,22 +240,26 @@ int main()
         ([&db](const crow::request& req, crow::response& res){
 
 			// Load key querystring
-			crow::query_string keyParam = req.url_params;
-            auto keys = keyParam.keys();
+			char* key = req.url_params.get("id");
+			char* pid = req.url_params.get("pid");
+			char* uid = req.url_params.get("uid");
+
 
 			// Stop and check if a key was provided
-			if (keys.size() <= 0) { // invalid key 
+			if (key == nullptr && (pid == nullptr || uid == nullptr)) { // invalid key 
 				res.code = 400;
 				res.end();
 				return;
 			}
 
-            auto keyValue = keyParam.get(string(keys[0]));
-            std::string id = string(keyValue);
-
 			// Delete task if exists in database
-			bool deleteRes = db.deleteTask(id);
-
+			bool deleteRes = false;
+			if (key == nullptr) {
+				deleteRes = db.deleteTask(uid, pid); // Delete using unique uid, pid combination
+			} else {
+				deleteRes = db.deleteTask(key); // Delete using unique ID
+			}
+			
 			std::cout << "Response: " << deleteRes << std::endl;
 
 			// Check if the query was successful

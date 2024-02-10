@@ -8,11 +8,14 @@ http://localhost:8080/search?key=
 http://localhost:8080/search?key=test
 
 ### get task data
-http://localhost:8080/edit?id=45
+http://localhost:8080/edit?id=1013
 
 ### Test Delete
 ### Assumes task id 46 exists, search for tasks first and choose an id to test
 DELETE http://localhost:8080/delete?id=46
+
+### Using uid and pid, delete
+DELETE http://localhost:8080/delete?pid=3282&uid=3
 
 ### test add route
 POST http://localhost:8080/add
