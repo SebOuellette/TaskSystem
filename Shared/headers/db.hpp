@@ -423,7 +423,7 @@ public:
 		vector<Task> tasks;
 		cout << "searching for key: " << key << ", ";
 		//SELECT ALL DISTINCT 
-		selectQuery << SQL_JOINALL_QUERY << " WHERE title LIKE '%" << key << "%' OR description LIKE '%" << key << "%'";
+		selectQuery << SQL_JOINALL_QUERY << " WHERE title LIKE '%" << key << "%'";
 		cout << "Running filter query: " << selectQuery.str() << std::endl;
 		this->run(selectQuery.str(), [](void* data, int argc, char** argv, char** colNames) {
 
