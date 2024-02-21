@@ -102,6 +102,9 @@ public:
 			this->run(createTables[i]);
 		}
 
+		// Speed up UPDATE calls
+		this->run("PRAGMA synchronous=Off"); 
+
 		seedData();
 
 		// Returns the final exit status. AKA the status of the last query
