@@ -27,7 +27,7 @@ int main()
 {
 	srand(time(NULL));
 
-	crow::App<crow::CORSHandler> app;
+	crow::App<crow::CORSHandler, crow::CookieParser> app;
 	// Create and initialize the database
 	TaskDb db;
 	
@@ -62,35 +62,109 @@ int main()
 	
 	CROW_ROUTE(app, "/search") // Get a current task list by key in json body
 	.methods(crow::HTTPMethod::OPTIONS, crow::HTTPMethod::GET)
-        ([&db](const crow::request& req, crow::response& res){
+        ([&db, &app](const crow::request& req, crow::response& res){
 			crow::json::wvalue jsonResponse;
 			if (req.method == crow::HTTPMethod::GET) {
 				
+								
 				const crow::json::rvalue& parsed = crow::json::load(req.body);
 				vector<Task> filteredTasks;
 				crow::query_string keyParam = req.url_params;
+
+				std::cout << "query: " << keyParam << ", ";
 				auto keys = keyParam.keys();
 				if (keys.size() <= 0) { // invalid key 
 					res.code = 400;
 					res.end();
 					return;
 				}
-				auto keyValue = keyParam.get(string(keys[0]));
+				std::cout << "key size: " << to_string(keys.size()) << std::endl;
+				auto keyValue = keyParam.get(keys[0]);
+				std::cout << "Search key: " << string(keyValue) << ", ";
+				auto& ctx = app.get_context<crow::CookieParser>(req);
 				string searchKey = string(keyValue);
-				filteredTasks =  db.getFilteredTasks(searchKey);
+				std::cout << "Retrieved context, ";
 
-				vector<crow::json::wvalue> jsonFilteredTasks;
+				string searchResults = "";
+				string resultCount = "0";
+				int resultSize = stoi(resultCount);
+				try{
+					searchResults = ctx.get_cookie("results");
+					resultSize = stoi(ctx.get_cookie("count"));
+					std::cout << "Retrieved cookie data, ";
+				}catch(...){ }
 
-				for(int i = 0; i < filteredTasks.size(); i++)
+				std::cout << "Result size: " << resultSize << ", ";
+
+				if(resultSize)
 				{
-					crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
-					jsonFilteredTasks.push_back(jsonTask);
-				}
-				jsonResponse = std::move(jsonFilteredTasks);
+					crow::json::wvalue searchResultJson((char*)searchResults.c_str());
+					//for each result in searchResultJson, build a task from it and check them against the search key
+					//if conditions are met then the query to the database is not performed
+					
+					std::cout << "Converted cookie data to json, cookie size: " << searchResultJson.size() << ", ";
+					vector<Task> savedResults = vector<Task>();
+					for(int i = 0; i < searchResultJson.size(); i++)
+					{
+						std::cout << "Current Cookie Data: " << std::endl << searchResultJson[i].dump() << "-------------------" << std::endl;
+						Task restoredFromCookie = buildTaskFromJson(searchResultJson[i].dump());
+						savedResults.push_back(restoredFromCookie);
+						std::cout << "restored a Task from cookie, ";
 
+					}
+					std::cout << "Created Task list from stored json data, ";
+
+					vector<Task> reducedList = std::vector<Task>();
+					for(int i = 0; i < savedResults.size(); i++)
+					{
+						if(!strcmp(savedResults.at(i).title, keyValue))
+						{
+							reducedList.push_back(savedResults.at(i));
+						}
+					}
+
+					std::cout << "filtered the stored results. size: " << to_string(reducedList.size()) << ", ";
+
+					int listCount = reducedList.size();
+					if(listCount == 0 || (listCount > 5 && listCount < 10))
+					{
+						filteredTasks =  db.getFilteredTasks(searchKey);
+						std::cout << "queired the db for more results, ";
+					}
+					else
+					{
+						filteredTasks = reducedList;
+					}
+					vector<crow::json::wvalue> jsonFilteredTasks;
+
+					for(int i = 0; i < filteredTasks.size(); i++)
+					{
+						crow::json::wvalue jsonTask = buildJsonFromTask(filteredTasks[i]);
+						jsonFilteredTasks.push_back(jsonTask);
+					}
+					std::cout << "converted filtered list to json, ";
+
+					jsonResponse = std::move(jsonFilteredTasks);
+
+					std::cout << "writing json data to cookie, ";
+					ctx.set_cookie("results", jsonResponse.dump());
+					ctx.set_cookie("count", to_string(jsonFilteredTasks.size()));
+				}
+				else
+				{
+					std::cout << "retrieving data from db, ";
+					filteredTasks =  db.getFilteredTasks(searchKey);
+					jsonResponse = std::move(filteredTasks);
+					std::cout << "converted filtered list to json, ";
+					
+					
+					ctx.set_cookie("results", jsonResponse.dump());
+					ctx.set_cookie("count", to_string(filteredTasks.size()));
+					std::cout << "writing json data to cookie, ";
+				}
 			}
 			
-			cout << "writing response, ";
+			std::cout << "writing response, ";
 			
 			res.set_header("Access-Control-Allow-Origin", "127.0.0.1:8080");
 			res.add_header("Content-Type", "application/json");
@@ -279,8 +353,8 @@ int main()
 	// PUT /add   				// replace existing entry
 	// DELETE /delete/<int> 	// delete entry
 	 
-		
-	app.port(8080).multithreaded().run();
+	
+	app.port(23500).multithreaded().run();
 	return 1;
 }
 crow::json::wvalue buildJsonFromPart(Part& part)
@@ -308,8 +382,7 @@ crow::json::wvalue buildJsonFromTask(Task& task)
 }
 
 Task buildTaskFromJson(string reqBody)
-{
-				
+{	
 	Task t;
 	const crow::json::rvalue& parsed = crow::json::load(reqBody);
 	
