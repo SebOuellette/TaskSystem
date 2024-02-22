@@ -1,7 +1,10 @@
 #define CROW_MAIN
 
 #include "headers/db.hpp"
+#include "headers/json.hpp"
 #include "headers/crow_all.h"
+
+using json = nlohmann::json;
 
 #include <regex>
 #include <iostream>
@@ -98,13 +101,17 @@ int main()
 
 				if(resultSize)
 				{
-					crow::json::wvalue searchResultJson((char*)searchResults.c_str());
+					std::string str = "[{\"test\":\"potato\"},{\"meat\":\"carrots\"}]";
+					json searchResultJson = json::parse(searchResults.c_str());
+					std::cout << json::parse(searchResults).dump(3) << std::endl;
+					//crow::json::rvalue searchResultJson(str.c_str());
 					//for each result in searchResultJson, build a task from it and check them against the search key
 					//if conditions are met then the query to the database is not performed
 					
 					std::cout << "Converted cookie data to json, cookie size: " << searchResultJson.size() << ", ";
+					std::cout << "Initial JSON" << searchResultJson.dump() << std::endl;
 					vector<Task> savedResults = vector<Task>();
-					for(int i = 0; i < searchResultJson.size(); i++)
+					for(int i=0;i<searchResultJson.size();i++)
 					{
 						std::cout << "Current Cookie Data: " << std::endl << searchResultJson[i].dump() << "-------------------" << std::endl;
 						Task restoredFromCookie = buildTaskFromJson(searchResultJson[i].dump());
@@ -354,7 +361,7 @@ int main()
 	// DELETE /delete/<int> 	// delete entry
 	 
 	
-	app.port(23500).multithreaded().run();
+	app.port(8080).multithreaded().run();
 	return 1;
 }
 crow::json::wvalue buildJsonFromPart(Part& part)
