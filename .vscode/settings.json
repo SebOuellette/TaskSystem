@@ -1,5 +1,6 @@
 {
     "files.associations": {
+        "*.html": "html",
         "chrono": "cpp",
         "thread": "cpp",
         "string_view": "cpp",
@@ -82,6 +83,17 @@
         "cwctype": "cpp",
         "deque": "cpp",
         "memory_resource": "cpp",
-        "numeric": "cpp"
+        "numeric": "cpp",
+        "any": "cpp",
+        "codecvt": "cpp",
+        "complex": "cpp",
+        "csignal": "cpp",
+        "set": "cpp",
+        "shared_mutex": "cpp",
+        "source_location": "cpp",
+        "span": "cpp",
+        "strstream": "cpp",
+        "typeindex": "cpp",
+        "variant": "cpp"
     }
 }

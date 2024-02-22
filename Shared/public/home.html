@@ -302,7 +302,7 @@
 
         fetch(`${window.location.href}add`, request).then(res=> {
           // Search for our new task
-          PopulateTable(document.getElementById("title").value)
+          PopulateTable(document.getElementById("filterkey"))
         })
       }
 
@@ -331,7 +331,7 @@
           } else {
             // Once we add a new task, display data about the task in the table. This lets us know if something already exists as well
             // Search for the task we added and display it
-             PopulateTable(document.getElementById("title").value);
+             PopulateTable(document.getElementById("filterkey"));
           }
           
         }).catch(err=>{
@@ -343,11 +343,12 @@
 
 
       window.onload = function(e) {
-        PopulateTable();
+        PopulateTable(document.getElementById("title").value);
       }
 
       setInterval(function () {
-            PopulateTable();
+
+            PopulateTable(document.getElementById("filterkey").value);
         }, 15000);
       
       function PopulateTable(searchterm)

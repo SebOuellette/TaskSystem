@@ -192,7 +192,7 @@ public:
 			// Sometimes, the id is unknown (when adding a new record)
 			// In this case, records are identified using userid and partid. 
 			 // In an event where the task iD is unknown, the user must know the unique combination of userid and partid. This is used when adding a new task, for example
-			selectQuery <<"userid == " << to_string(t.user.id) << " AND partid == " << to_string(t.consumedPart.id);
+			selectQuery <<"id == " << to_string(t.id);
 		} else {
 			// When we know the task ID, we can simply query for ID, saving performance
 			selectQuery << "id == " << std::to_string(t.id);
